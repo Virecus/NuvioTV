@@ -42,6 +42,7 @@ import com.nuvio.tv.ui.screens.stream.StreamScreen
 import com.nuvio.tv.ui.screens.home.ContinueWatchingItem
 import com.nuvio.tv.ui.screens.account.AuthSignInScreen
 import com.nuvio.tv.ui.screens.account.AuthQrSignInScreen
+import com.nuvio.tv.ui.screens.account.LicenseStatusScreen
 import com.nuvio.tv.ui.screens.cast.CastDetailScreen
 import com.nuvio.tv.ui.screens.profile.ProfileSelectionMode
 import com.nuvio.tv.ui.screens.profile.ProfileSelectionScreen
@@ -948,6 +949,7 @@ fun NuvioNavHost(
                 onNavigateToTrakt = { navController.navigate(Screen.Trakt.route) },
                 onNavigateToAddons = { navController.navigate(Screen.AddonManager.route) },
                 onNavigateToAuthQrSignIn = { navController.navigate(Screen.AuthQrSignIn.route) },
+                onNavigateToLicenseStatus = { navController.navigate(Screen.LicenseStatus.route) },
                 onNavigateToManageProfiles = { navController.navigate(Screen.ManageProfiles.route) },
                 onNavigateToSupportersContributors = {
                     navController.navigate(Screen.SupportersContributors.route)
@@ -1091,6 +1093,13 @@ fun NuvioNavHost(
 
         composable(Screen.AuthQrSignIn.route) {
             AuthQrSignInScreen(
+                onBackPress = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.LicenseStatus.route) {
+            LicenseStatusScreen(
+                gateMode = false,
                 onBackPress = { navController.popBackStack() }
             )
         }

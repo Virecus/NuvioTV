@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.runtime.Composable
@@ -37,6 +38,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
@@ -48,13 +51,18 @@ import com.nuvio.tv.domain.model.AuthState
 import com.nuvio.tv.ui.theme.NuvioColors
 import androidx.compose.ui.res.stringResource
 import com.nuvio.tv.R
+import com.nuvio.tv.core.license.LicenseStatus
 
 @Composable
 fun AccountSettingsContent(
     uiState: AccountUiState,
     viewModel: AccountViewModel,
-    onNavigateToAuthQrSignIn: () -> Unit = {}
+    onNavigateToAuthQrSignIn: () -> Unit = {},
+    onNavigateToLicenseStatus: () -> Unit = {}
 ) {
+    val licenseViewModel: LicenseViewModel = hiltViewModel()
+    val licenseUiState by licenseViewModel.uiState.collectAsStateWithLifecycle()
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 8.dp),
@@ -90,6 +98,14 @@ fun AccountSettingsContent(
                         onClick = onNavigateToAuthQrSignIn
                     )
                 }
+                item(key = "account_license_status_signed_out") {
+                    SettingsActionButton(
+                        icon = Icons.Default.CreditCard,
+                        title = stringResource(R.string.license_status_menu_title),
+                        subtitle = licenseStatusSubtitle(licenseUiState.status),
+                        onClick = onNavigateToLicenseStatus
+                    )
+                }
             }
 
             is AuthState.FullAccount -> {
@@ -107,10 +123,36 @@ fun AccountSettingsContent(
                     item(key = "account_sync_overview_loading") { SyncOverviewLoadingCard() }
                 }
 
+                item(key = "account_license_status_signed_in") {
+                    SettingsActionButton(
+                        icon = Icons.Default.CreditCard,
+                        title = stringResource(R.string.license_status_menu_title),
+                        subtitle = licenseStatusSubtitle(licenseUiState.status),
+                        onClick = onNavigateToLicenseStatus
+                    )
+                }
+
                 item(key = "account_sign_out") { SignOutSettingsButton(onClick = { viewModel.signOut() }) }
             }
 
         }
+    }
+}
+
+@Composable
+private fun licenseStatusSubtitle(status: LicenseStatus): String {
+    return when (status) {
+        LicenseStatus.Loading -> stringResource(R.string.license_status_loading_subtitle)
+        LicenseStatus.Missing -> stringResource(R.string.license_status_missing_subtitle)
+        LicenseStatus.NetworkError -> stringResource(R.string.license_status_network_subtitle)
+        is LicenseStatus.Invalid -> stringResource(R.string.license_status_invalid_subtitle)
+        is LicenseStatus.NotStarted -> stringResource(R.string.license_status_not_started_subtitle, formatLicenseInstant(status.startsAt))
+        is LicenseStatus.Expired -> stringResource(R.string.license_status_expired_subtitle, formatLicenseInstant(status.deadlineAt))
+        is LicenseStatus.Valid -> stringResource(
+            R.string.license_status_valid_subtitle,
+            status.remainingDays.toString(),
+            formatLicenseInstant(status.deadlineAt)
+        )
     }
 }
 

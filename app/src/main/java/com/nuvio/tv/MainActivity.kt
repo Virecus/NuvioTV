@@ -115,6 +115,8 @@ import coil3.request.ImageRequest
 import com.nuvio.tv.R
 import com.nuvio.tv.core.auth.AuthManager
 import com.nuvio.tv.core.build.AppFeaturePolicy
+import com.nuvio.tv.core.license.LicenseManager
+import com.nuvio.tv.core.license.LicenseStatus
 import com.nuvio.tv.core.profile.ProfileManager
 import com.nuvio.tv.core.sync.ProfileSettingsSyncService
 import com.nuvio.tv.core.sync.ProfileSyncService
@@ -136,6 +138,7 @@ import com.nuvio.tv.ui.components.ProfileAvatarCircle
 import com.nuvio.tv.ui.navigation.NuvioNavHost
 import com.nuvio.tv.ui.navigation.Screen
 import com.nuvio.tv.ui.screens.account.AuthQrSignInScreen
+import com.nuvio.tv.ui.screens.account.LicenseStatusScreen
 import com.nuvio.tv.ui.screens.addon.EssentialAddonSetupScreen
 import com.nuvio.tv.ui.screens.profile.ProfileSelectionScreen
 import com.nuvio.tv.ui.theme.NuvioColors
@@ -219,6 +222,9 @@ class MainActivity : ComponentActivity() {
     lateinit var authManager: AuthManager
 
     @Inject
+    lateinit var licenseManager: LicenseManager
+
+    @Inject
     lateinit var appOnboardingDataStore: AppOnboardingDataStore
 
     @Inject
@@ -273,6 +279,7 @@ class MainActivity : ComponentActivity() {
             }
             val hasSeenAuthQrOnFirstLaunch by hasSeenAuthQrFlow.collectAsState(initial = null)
             val authState by authManager.authState.collectAsState()
+            val licenseStatus by licenseManager.status.collectAsState(initial = LicenseStatus.Loading)
 
             LaunchedEffect(hasSeenAuthQrOnFirstLaunch, authState) {
                 if (hasSeenAuthQrOnFirstLaunch == false && authState is AuthState.FullAccount) {
@@ -396,6 +403,15 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(NuvioColors.Background)
+                        )
+                        return@Surface
+                    }
+
+                    val hasValidLicense = licenseStatus is LicenseStatus.Valid
+                    if (!hasValidLicense) {
+                        LicenseStatusScreen(
+                            gateMode = true,
+                            onBackPress = {}
                         )
                         return@Surface
                     }

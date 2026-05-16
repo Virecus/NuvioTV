@@ -203,6 +203,7 @@ fun SettingsScreen(
     onNavigateToTrakt: () -> Unit = {},
     onNavigateToAddons: () -> Unit = {},
     onNavigateToAuthQrSignIn: () -> Unit = {},
+    onNavigateToLicenseStatus: () -> Unit = {},
     onNavigateToManageProfiles: () -> Unit = {},
     onNavigateToSupportersContributors: () -> Unit = {},
     onNavigateToLicensesAttributions: () -> Unit = {},
@@ -511,7 +512,8 @@ fun SettingsScreen(
                         )
                         SettingsCategory.PLUGINS -> if (AppFeaturePolicy.pluginsEnabled) PluginsSettingsContent()
                         SettingsCategory.ACCOUNT -> AccountSettingsInline(
-                            onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn
+                            onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn,
+                            onNavigateToLicenseStatus = onNavigateToLicenseStatus
                         )
                         SettingsCategory.DEBUG -> DebugSettingsContent()
                         SettingsCategory.TRAKT -> Unit
@@ -593,7 +595,8 @@ private fun EssentialAdvancedSettingsContent(
 
 @Composable
 private fun AccountSettingsInline(
-    onNavigateToAuthQrSignIn: () -> Unit
+    onNavigateToAuthQrSignIn: () -> Unit,
+    onNavigateToLicenseStatus: () -> Unit
 ) {
     val accountViewModel: com.nuvio.tv.ui.screens.account.AccountViewModel = hiltViewModel()
     val accountUiState by accountViewModel.uiState.collectAsStateWithLifecycle()
@@ -610,7 +613,8 @@ private fun AccountSettingsInline(
             com.nuvio.tv.ui.screens.account.AccountSettingsContent(
                 uiState = accountUiState,
                 viewModel = accountViewModel,
-                onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn
+                onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn,
+                onNavigateToLicenseStatus = onNavigateToLicenseStatus
             )
         }
     }

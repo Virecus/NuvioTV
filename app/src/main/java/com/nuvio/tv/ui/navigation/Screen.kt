@@ -148,6 +148,7 @@ sealed class Screen(val route: String) {
     data object ManageProfiles : Screen("manage_profiles")
     data object AuthSignIn : Screen("auth_sign_in")
     data object AuthQrSignIn : Screen("auth_qr_sign_in")
+    data object LicenseStatus : Screen("license_status")
     data object SyncCodeGenerate : Screen("sync_code_generate")
     data object SyncCodeClaim : Screen("sync_code_claim")
     data object CatalogSeeAll : Screen("catalog_see_all/{catalogId}/{addonId}/{type}?fromSearch={fromSearch}") {
