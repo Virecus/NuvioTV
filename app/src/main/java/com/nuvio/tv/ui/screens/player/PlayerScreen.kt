@@ -111,6 +111,7 @@ import com.nuvio.tv.data.local.LibassRenderType
 import com.nuvio.tv.data.local.SubtitleStyleSettings
 import com.nuvio.tv.data.local.StreamAutoPlayMode
 import com.nuvio.tv.domain.model.Subtitle
+import com.nuvio.tv.domain.model.WatchProgress
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.theme.NuvioColors
 import android.text.format.DateFormat
@@ -129,8 +130,8 @@ import kotlin.math.abs
 @Composable
 fun PlayerScreen(
     viewModel: PlayerViewModel = hiltViewModel(),
-    onBackPress: (currentVideoId: String?, currentSeason: Int?, currentEpisode: Int?, autoPlayEnabled: Boolean) -> Unit,
-    onPlaybackErrorBack: () -> Unit = { onBackPress(null, null, null, false) },
+    onBackPress: (currentVideoId: String?, currentSeason: Int?, currentEpisode: Int?, autoPlayEnabled: Boolean, playbackCompleted: Boolean) -> Unit,
+    onPlaybackErrorBack: () -> Unit = { onBackPress(null, null, null, false, false) },
     onPlaybackEnded: ((nextVideoId: String?, nextSeason: Int?, nextEpisode: Int?, exitReason: PlayerExitReason?) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -150,7 +151,10 @@ fun PlayerScreen(
     var subtitleTimingConsumeNextConfirmKeyUp by remember { mutableStateOf(false) }
     val exitPlayer: () -> Unit = {
         viewModel.stopAndRelease()
-        onBackPress(uiState.currentVideoId, uiState.currentSeason, uiState.currentEpisode, uiState.streamAutoPlayMode != StreamAutoPlayMode.MANUAL)
+        val timeline = viewModel.playbackTimeline.value
+        val completed = timeline.duration > 0L &&
+            (timeline.currentPosition.toFloat() / timeline.duration.toFloat()) >= WatchProgress.COMPLETED_THRESHOLD
+        onBackPress(uiState.currentVideoId, uiState.currentSeason, uiState.currentEpisode, uiState.streamAutoPlayMode != StreamAutoPlayMode.MANUAL, completed)
     }
     val exitPlayerFromError: () -> Unit = {
         viewModel.stopAndRelease()
@@ -222,7 +226,8 @@ fun PlayerScreen(
                         uiState.currentVideoId,
                         uiState.currentSeason,
                         uiState.currentEpisode,
-                        uiState.streamAutoPlayMode != StreamAutoPlayMode.MANUAL
+                        uiState.streamAutoPlayMode != StreamAutoPlayMode.MANUAL,
+                        true
                     )
                 }
                 viewModel.consumePendingExitReason()
@@ -238,7 +243,8 @@ fun PlayerScreen(
                         uiState.currentVideoId,
                         uiState.currentSeason,
                         uiState.currentEpisode,
-                        uiState.streamAutoPlayMode != StreamAutoPlayMode.MANUAL
+                        uiState.streamAutoPlayMode != StreamAutoPlayMode.MANUAL,
+                        true
                     )
                 }
             }
@@ -667,52 +673,16 @@ fun PlayerScreen(
                 .zIndex(2.7f)
         )
 
-        // Buffering indicator
-        if (uiState.isBuffering && !uiState.showLoadingOverlay) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                if (uiState.isTorrentStream && uiState.torrentBufferingMessage != null) {
-                    // Torrent rebuffer: spinner + download stats + progress bar
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        LoadingIndicator()
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = uiState.torrentBufferingMessage ?: "",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                        if (uiState.torrentBufferingProgress > 0f) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Box(
-                                modifier = Modifier
-                                    .width(200.dp)
-                                    .height(3.dp)
-                                    .background(
-                                        color = Color.White.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(2.dp)
-                                    )
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(uiState.torrentBufferingProgress.coerceIn(0f, 1f))
-                                        .height(3.dp)
-                                        .background(
-                                            color = Color.White.copy(alpha = 0.85f),
-                                            shape = RoundedCornerShape(2.dp)
-                                        )
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    LoadingIndicator()
-                }
-            }
-        }
+        // Buffering indicator — isolated in its own composable scope so that
+        // isBuffering state changes only recompose this small subtree instead
+        // of the entire PlayerScreen.
+        PlayerBufferingIndicator(
+            isBuffering = uiState.isBuffering,
+            showLoadingOverlay = uiState.showLoadingOverlay,
+            isTorrentStream = uiState.isTorrentStream,
+            torrentBufferingMessage = uiState.torrentBufferingMessage,
+            torrentBufferingProgress = uiState.torrentBufferingProgress
+        )
 
         // Error state
         if (uiState.error != null) {
@@ -882,7 +852,10 @@ fun PlayerScreen(
                     val title = uiState.title
                     val headers = viewModel.getCurrentHeaders()
                     viewModel.stopAndRelease()
-                    onBackPress(uiState.currentVideoId, uiState.currentSeason, uiState.currentEpisode, uiState.streamAutoPlayMode != StreamAutoPlayMode.MANUAL)
+                    val timeline = viewModel.playbackTimeline.value
+                    val completed = timeline.duration > 0L &&
+                        (timeline.currentPosition.toFloat() / timeline.duration.toFloat()) >= WatchProgress.COMPLETED_THRESHOLD
+                    onBackPress(uiState.currentVideoId, uiState.currentSeason, uiState.currentEpisode, uiState.streamAutoPlayMode != StreamAutoPlayMode.MANUAL, completed)
                     ExternalPlayerLauncher.launch(
                         context = context,
                         url = url,
@@ -2677,4 +2650,64 @@ private fun formatTime(millis: Long): String {
 
 private fun formatSubtitleDelay(delayMs: Int): String {
     return String.format(Locale.US, "%+.3fs", delayMs / 1000f)
+}
+
+/**
+ * Buffering indicator extracted into its own composable to isolate
+ * recomposition scope. When [isBuffering] toggles, only this subtree
+ * is recomposed — the rest of [PlayerScreen] is skipped by Compose.
+ */
+@Composable
+private fun PlayerBufferingIndicator(
+    isBuffering: Boolean,
+    showLoadingOverlay: Boolean,
+    isTorrentStream: Boolean,
+    torrentBufferingMessage: String?,
+    torrentBufferingProgress: Float
+) {
+    if (!isBuffering || showLoadingOverlay) return
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isTorrentStream && torrentBufferingMessage != null) {
+            // Torrent rebuffer: spinner + download stats + progress bar
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LoadingIndicator()
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = torrentBufferingMessage,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                if (torrentBufferingProgress > 0f) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(200.dp)
+                            .height(3.dp)
+                            .background(
+                                color = Color.White.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(2.dp)
+                            )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(torrentBufferingProgress.coerceIn(0f, 1f))
+                                .height(3.dp)
+                                .background(
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    shape = RoundedCornerShape(2.dp)
+                                )
+                        )
+                    }
+                }
+            }
+        } else {
+            LoadingIndicator()
+        }
+    }
 }
