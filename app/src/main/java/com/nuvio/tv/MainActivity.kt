@@ -683,7 +683,9 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    if (AppFeaturePolicy.inAppUpdatesEnabled && !BuildConfig.IS_DEBUG_BUILD) {
+                    if (AppFeaturePolicy.inAppUpdatesEnabled &&
+                        (!BuildConfig.IS_DEBUG_BUILD || BuildConfig.IN_APP_UPDATES_ALLOW_DEBUG)
+                    ) {
                         val updateViewModel: UpdateViewModel = hiltViewModel(this@MainActivity)
                         val updateState by updateViewModel.uiState.collectAsState()
                         UpdatePromptDialog(

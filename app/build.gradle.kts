@@ -36,6 +36,11 @@ val releaseKeyPasswordValue = env("NUVIO_RELEASE_KEY_PASSWORD")
     ?: localProperties.getProperty("NUVIO_RELEASE_KEY_PASSWORD", "815787")
 val releaseStorePasswordValue = env("NUVIO_RELEASE_STORE_PASSWORD")
     ?: localProperties.getProperty("NUVIO_RELEASE_STORE_PASSWORD", "815787")
+val gitHubOwnerValue = localProperties.getProperty("GITHUB_OWNER", "tapframe")
+val gitHubRepoValue = localProperties.getProperty("GITHUB_REPO", "NuvioTV")
+val allowDebugInAppUpdatesValue = localProperties
+    .getProperty("IN_APP_UPDATES_ALLOW_DEBUG", "false")
+    .toBoolean()
 
 android {
     namespace = "com.nuvio.tv"
@@ -65,8 +70,9 @@ android {
         buildConfigField("String", "UNIQUE_CONTRIBUTIONS_BASE_URL", "\"${localProperties.getProperty("UNIQUE_CONTRIBUTIONS_BASE_URL", "")}\"")
 
         // In-app updater (GitHub Releases)
-        buildConfigField("String", "GITHUB_OWNER", "\"tapframe\"")
-        buildConfigField("String", "GITHUB_REPO", "\"NuvioTV\"")
+        buildConfigField("String", "GITHUB_OWNER", "\"$gitHubOwnerValue\"")
+        buildConfigField("String", "GITHUB_REPO", "\"$gitHubRepoValue\"")
+        buildConfigField("boolean", "IN_APP_UPDATES_ALLOW_DEBUG", allowDebugInAppUpdatesValue.toString())
     }
 
     flavorDimensions += "distribution"
