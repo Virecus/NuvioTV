@@ -4,14 +4,18 @@ package com.nuvio.tv.ui.screens.account
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +25,9 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +49,7 @@ import androidx.tv.material3.Text
 import com.nuvio.tv.R
 import com.nuvio.tv.core.license.LicenseRecord
 import com.nuvio.tv.core.license.LicenseStatus
+import com.nuvio.tv.domain.model.AuthState
 import com.nuvio.tv.ui.theme.NuvioColors
 import java.time.Instant
 import java.time.ZoneId
@@ -51,9 +59,14 @@ import java.time.format.DateTimeFormatter
 fun LicenseStatusScreen(
     gateMode: Boolean,
     onBackPress: () -> Unit = {},
-    viewModel: LicenseViewModel = hiltViewModel()
+    viewModel: LicenseViewModel = hiltViewModel(),
+    accountViewModel: AccountViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val accountUiState by accountViewModel.uiState.collectAsStateWithLifecycle()
+    val signedInAccount = accountUiState.authState as? AuthState.FullAccount
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     BackHandler(enabled = !gateMode) {
         onBackPress()
@@ -62,26 +75,29 @@ fun LicenseStatusScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(NuvioColors.Background),
+            .background(NuvioColors.Background)
+            .navigationBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.62f)
+                .fillMaxWidth(0.68f)
                 .background(
                     color = NuvioColors.BackgroundElevated,
                     shape = RoundedCornerShape(20.dp)
                 )
-                .padding(28.dp),
+                .verticalScroll(scrollState)
+                .padding(horizontal = 28.dp, vertical = 22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             androidx.compose.foundation.Image(
                 painter = painterResource(id = R.drawable.app_logo_wordmark),
                 contentDescription = stringResource(R.string.license_status_title),
                 modifier = Modifier
-                    .fillMaxWidth(0.78f)
-                    .height(56.dp)
+                    .fillMaxWidth(0.72f)
+                    .height(48.dp)
             )
 
             Text(
@@ -102,6 +118,101 @@ fun LicenseStatusScreen(
                 textAlign = TextAlign.Center
             )
 
+            if (gateMode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(NuvioColors.BackgroundCard, RoundedCornerShape(16.dp))
+                        .padding(18.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = stringResource(R.string.license_status_account_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = NuvioColors.TextPrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        if (signedInAccount == null) {
+                            Text(
+                                text = stringResource(R.string.license_status_account_subtitle),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NuvioColors.TextSecondary
+                            )
+                            InputField(
+                                value = email,
+                                onValueChange = {
+                                    email = it
+                                    accountViewModel.clearError()
+                                },
+                                placeholder = stringResource(R.string.auth_signin_email_placeholder),
+                                keyboardType = KeyboardType.Email,
+                                imeAction = ImeAction.Next
+                            )
+                            InputField(
+                                value = password,
+                                onValueChange = {
+                                    password = it
+                                    accountViewModel.clearError()
+                                },
+                                placeholder = stringResource(R.string.auth_signin_password_placeholder),
+                                keyboardType = KeyboardType.Password,
+                                isPassword = true,
+                                imeAction = ImeAction.Done,
+                                onImeAction = {
+                                    if (!accountUiState.isLoading) {
+                                        accountViewModel.signIn(email.trim(), password)
+                                    }
+                                }
+                            )
+                            if (!accountUiState.error.isNullOrBlank()) {
+                                Text(
+                                    text = accountUiState.error!!,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFE57373)
+                                )
+                            }
+                            Button(
+                                onClick = { accountViewModel.signIn(email.trim(), password) },
+                                enabled = !accountUiState.isLoading && email.isNotBlank() && password.isNotBlank(),
+                                colors = ButtonDefaults.colors(
+                                    containerColor = NuvioColors.Secondary,
+                                    focusedContainerColor = NuvioColors.SecondaryVariant,
+                                    contentColor = NuvioColors.OnSecondary,
+                                    focusedContentColor = NuvioColors.OnSecondaryVariant
+                                ),
+                                shape = ButtonDefaults.shape(RoundedCornerShape(50))
+                            ) {
+                                Text(
+                                    if (accountUiState.isLoading) {
+                                        stringResource(R.string.auth_signin_loading)
+                                    } else {
+                                        stringResource(R.string.auth_signin_submit)
+                                    }
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = stringResource(R.string.license_status_signed_in_as, signedInAccount.email),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NuvioColors.TextSecondary
+                            )
+                            Button(
+                                onClick = { accountViewModel.signOut() },
+                                colors = ButtonDefaults.colors(
+                                    containerColor = NuvioColors.BackgroundElevated,
+                                    focusedContainerColor = NuvioColors.FocusBackground,
+                                    contentColor = NuvioColors.TextPrimary,
+                                    focusedContentColor = NuvioColors.TextPrimary
+                                ),
+                                shape = ButtonDefaults.shape(RoundedCornerShape(50))
+                            ) {
+                                Text(stringResource(R.string.license_status_switch_account))
+                            }
+                        }
+                    }
+                }
+            }
+
             LicenseStatusSummaryCard(status = uiState.status)
 
             InputField(
@@ -113,17 +224,21 @@ fun LicenseStatusScreen(
                 onImeAction = viewModel::submit
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Button(
                     onClick = viewModel::submit,
-                    enabled = !uiState.isSubmitting,
+                    enabled = !uiState.isSubmitting && signedInAccount != null,
                     colors = ButtonDefaults.colors(
                         containerColor = NuvioColors.Secondary,
                         focusedContainerColor = NuvioColors.SecondaryVariant,
                         contentColor = NuvioColors.OnSecondary,
                         focusedContentColor = NuvioColors.OnSecondaryVariant
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(50))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(50)),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Icon(
                         imageVector = Icons.Default.VpnKey,
@@ -142,18 +257,20 @@ fun LicenseStatusScreen(
                         contentColor = NuvioColors.TextPrimary,
                         focusedContentColor = NuvioColors.TextPrimary
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(50))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(50)),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(stringResource(R.string.license_status_clear))
                 }
             }
 
-            if (gateMode && uiState.status !is LicenseStatus.Valid) {
+            if (gateMode && (signedInAccount == null || uiState.status !is LicenseStatus.Valid)) {
                 Text(
                     text = stringResource(R.string.license_status_gate_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = NuvioColors.TextTertiary,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
             }
         }
@@ -182,6 +299,18 @@ private fun LicenseStatusSummaryCard(status: LicenseStatus) {
             subtitle = stringResource(R.string.license_status_invalid_subtitle),
             icon = Icons.Default.ErrorOutline,
             accent = Color(0xFFE57373)
+        )
+
+        is LicenseStatus.AccountMismatch -> LicenseSummaryContent(
+            title = stringResource(R.string.license_status_account_mismatch_title),
+            subtitle = if (status.signedInEmail.isNullOrBlank()) {
+                stringResource(R.string.license_status_account_required_subtitle)
+            } else {
+                stringResource(R.string.license_status_account_mismatch_subtitle)
+            },
+            icon = Icons.Default.ErrorOutline,
+            accent = Color(0xFFFFB74D),
+            record = status.record
         )
 
         LicenseStatus.NetworkError -> LicenseSummaryContent(
@@ -252,11 +381,17 @@ private fun LicenseStatusSummaryCard(status: LicenseStatus) {
                 style = MaterialTheme.typography.bodySmall,
                 color = NuvioColors.TextSecondary
             )
-            if (status is LicenseStatus.Valid || status is LicenseStatus.Expired || status is LicenseStatus.NotStarted) {
+            if (
+                status is LicenseStatus.Valid ||
+                status is LicenseStatus.Expired ||
+                status is LicenseStatus.NotStarted ||
+                status is LicenseStatus.AccountMismatch
+            ) {
                 val record = when (status) {
                     is LicenseStatus.Valid -> status.record
                     is LicenseStatus.Expired -> status.record
                     is LicenseStatus.NotStarted -> status.record
+                    is LicenseStatus.AccountMismatch -> status.record
                     else -> null
                 }
                 if (record != null) {

@@ -202,7 +202,7 @@ fun SettingsScreen(
     showBuiltInHeader: Boolean = true,
     onNavigateToTrakt: () -> Unit = {},
     onNavigateToAddons: () -> Unit = {},
-    onNavigateToAuthQrSignIn: () -> Unit = {},
+    onNavigateToAuthSignIn: () -> Unit = {},
     onNavigateToLicenseStatus: () -> Unit = {},
     onNavigateToManageProfiles: () -> Unit = {},
     onNavigateToSupportersContributors: () -> Unit = {},
@@ -374,7 +374,7 @@ fun SettingsScreen(
                                 onClick = {
                                     if (section.destination == SettingsSectionDestination.External) {
                                         when (section.category) {
-                                            SettingsCategory.ACCOUNT -> onNavigateToAuthQrSignIn()
+                                            SettingsCategory.ACCOUNT -> onNavigateToAuthSignIn()
                                             SettingsCategory.TRAKT -> onNavigateToTrakt()
                                             else -> Unit
                                         }
@@ -512,7 +512,7 @@ fun SettingsScreen(
                         )
                         SettingsCategory.PLUGINS -> if (AppFeaturePolicy.pluginsEnabled) PluginsSettingsContent()
                         SettingsCategory.ACCOUNT -> AccountSettingsInline(
-                            onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn,
+                            onNavigateToAuthSignIn = onNavigateToAuthSignIn,
                             onNavigateToLicenseStatus = onNavigateToLicenseStatus
                         )
                         SettingsCategory.DEBUG -> DebugSettingsContent()
@@ -595,7 +595,7 @@ private fun EssentialAdvancedSettingsContent(
 
 @Composable
 private fun AccountSettingsInline(
-    onNavigateToAuthQrSignIn: () -> Unit,
+    onNavigateToAuthSignIn: () -> Unit,
     onNavigateToLicenseStatus: () -> Unit
 ) {
     val accountViewModel: com.nuvio.tv.ui.screens.account.AccountViewModel = hiltViewModel()
@@ -613,7 +613,7 @@ private fun AccountSettingsInline(
             com.nuvio.tv.ui.screens.account.AccountSettingsContent(
                 uiState = accountUiState,
                 viewModel = accountViewModel,
-                onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn,
+                onNavigateToAuthSignIn = onNavigateToAuthSignIn,
                 onNavigateToLicenseStatus = onNavigateToLicenseStatus
             )
         }

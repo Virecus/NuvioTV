@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">Royal</string>
     <string name="type_movie">فيلم</string>
     <string name="type_series">مسلسل</string>
@@ -240,7 +240,7 @@
     <!-- AboutScreen -->
     <string name="about_title">حول</string>
     <string name="about_subtitle">معلومات التطبيق، التحديثات، والروابط القانونية</string>
-    <string name="about_made_with_love">صنع بكل ❤️ بواسطة Tapframe والأصدقاء</string>
+    <string name="about_made_with_love">صنع بكل ❤️ بواسطة Virecus والأصدقاء</string>
     <string name="about_version">الإصدار %1$s</string>
     <string name="about_check_updates">التحقق من التحديثات</string>
     <string name="about_check_updates_subtitle">تحميل أحدث إصدار</string>

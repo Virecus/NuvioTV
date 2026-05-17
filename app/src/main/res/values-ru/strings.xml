@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">Royal</string>
     <string name="type_movie">Фильм</string>
     <string name="type_series">Сериал</string>
@@ -248,7 +248,7 @@
     <!-- AboutScreen -->
     <string name="about_title">О приложении</string>
     <string name="about_subtitle">Информация о приложении, обновления и ссылки</string>
-    <string name="about_made_with_love">Сделано с ❤️ командой Tapframe и друзьями</string>
+    <string name="about_made_with_love">Сделано с ❤️ командой Virecus и друзьями</string>
     <string name="about_version">Версия %1$s</string>
     <string name="about_check_updates">Проверить обновления</string>
     <string name="about_check_updates_subtitle">Загрузить последний релиз</string>

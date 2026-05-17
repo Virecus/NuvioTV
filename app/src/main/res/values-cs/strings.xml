@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">Royal</string>
     <string name="tv_channel_continue_watching">Pokračovat ve sledování</string>
     <string name="type_movie">Film</string>
@@ -325,7 +325,7 @@
 <!-- AboutScreen -->
 <string name="about_title">O aplikaci</string>
 <string name="about_subtitle">Informace o aplikaci, aktualizace a právní odkazy</string>
-<string name="about_made_with_love">Vytvořeno s ❤️ týmem Tapframe a přáteli</string>
+<string name="about_made_with_love">Vytvořeno s ❤️ týmem Virecus a přáteli</string>
 <string name="about_version">Verze %1$s</string>
 <string name="about_check_updates">Zkontrolovat aktualizace</string>
 <string name="about_check_updates_subtitle">Stáhnout nejnovější verzi</string>

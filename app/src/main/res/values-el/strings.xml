@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">Royal</string>
     <string name="tv_channel_continue_watching">Συνέχεια παρακολούθησης</string>
     <string name="type_movie">Ταινία</string>
@@ -314,7 +314,7 @@
     <!-- AboutScreen -->
     <string name="about_title">Σχετικά</string>
     <string name="about_subtitle">Πληροφορίες εφαρμογής, ενημερώσεις και νομικοί σύνδεσμοι</string>
-    <string name="about_made_with_love">Δημιουργήθηκε με ❤️ από την Tapframe και φίλους</string>
+    <string name="about_made_with_love">Δημιουργήθηκε με ❤️ από την Virecus και φίλους</string>
     <string name="about_version">Έκδοση %1$s</string>
     <string name="about_check_updates">Έλεγχος ενημερώσεων</string>
     <string name="about_check_updates_subtitle">Λήψη τελευταίας έκδοσης</string>

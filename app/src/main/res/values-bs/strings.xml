@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">Royal</string>
     <string name="type_movie">Film</string>
     <string name="type_series">Serija</string>
@@ -249,7 +249,7 @@
     <!-- AboutScreen -->
     <string name="about_title">O nama</string>
     <string name="about_subtitle">Informacije o aplikaciji, ažuriranja i pravni linkovi</string>
-    <string name="about_made_with_love">Napravljeno s ❤️ od strane Tapframea i prijatelja</string>
+    <string name="about_made_with_love">Napravljeno s ❤️ od strane Virecusa i prijatelja</string>
     <string name="about_version">Verzija %1$s</string>
     <string name="about_check_updates">Provjeri ažuriranja</string>
     <string name="about_check_updates_subtitle">Preuzmi najnoviju verziju</string>

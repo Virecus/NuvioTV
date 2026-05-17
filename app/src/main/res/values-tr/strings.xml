@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">Royal</string>
     <string name="tv_channel_continue_watching">İzlemeye Devam Et</string>
     <string name="type_movie">Film</string>
@@ -100,7 +100,7 @@
     <!-- HomeScreen -->
     <string name="home_no_addons">Yüklü eklenti yok. Başlamak için bir eklenti ekleyin.</string>
     <string name="home_no_catalog_addons">Katalog eklentisi yok. İçerikleri görmek için bir katalog eklentisi yükleyin.</string>
-    <string name="auth_notice_nuvio_logged_out">Nuvio hesabınızdan çıkış yapıldı. Lütfen tekrar giriş yapın.</string>
+    <string name="auth_notice_nuvio_logged_out">Royal hesabınızdan çıkış yapıldı. Lütfen tekrar giriş yapın.</string>
     <string name="auth_notice_trakt_logged_out">Trakt hesabınızdan çıkış yapıldı. Lütfen yeniden bağlanın.</string>
     <string name="error_generic">Bir hata oluştu</string>
 
@@ -323,7 +323,7 @@
     <!-- AboutScreen -->
     <string name="about_title">Hakkında</string>
     <string name="about_subtitle">Uygulama bilgileri, güncellemeler ve yasal bağlantılar</string>
-    <string name="about_made_with_love">Tapframe ve arkadaşları tarafından ❤️ ile yapıldı</string>
+    <string name="about_made_with_love">Virecus ve arkadaşları tarafından ❤️ ile yapıldı</string>
     <string name="about_version">Sürüm %1$s</string>
     <string name="about_check_updates">Güncellemeleri kontrol et</string>
     <string name="about_check_updates_subtitle">En son sürümü indir</string>
@@ -334,16 +334,16 @@
     <string name="about_licenses_attributions">Lisanslar ve Atıflar</string>
     <string name="about_licenses_attributions_subtitle">Veri kaynakları, teşekkürler ve Android lisansları</string>
     <string name="licenses_attributions_title">Lisanslar ve Atıflar</string>
-    <string name="licenses_attributions_subtitle">Nuvio TV tarafından kullanılan veri sağlayıcıları, hizmet kredileri ve Android oynatma lisansları.</string>
+    <string name="licenses_attributions_subtitle">Royal TV tarafından kullanılan veri sağlayıcıları, hizmet kredileri ve Android oynatma lisansları.</string>
     <string name="licenses_attributions_section_app">UYGULAMA LİSANSI</string>
     <string name="licenses_attributions_section_data">VERİ VE HİZMETLER</string>
     <string name="licenses_attributions_section_playback">ANDROID OYNATMA LİSANSLARI</string>
-    <string name="licenses_attributions_nuvio_title">Nuvio TV</string>
+    <string name="licenses_attributions_nuvio_title">Royal TV</string>
     <string name="licenses_attributions_nuvio_body">Kaynak kodu ve lisans koşulları proje deposunda mevcuttur. GNU Genel Kamu Lisansı v3.0 altında lisanslanmıştır.</string>
     <string name="licenses_attributions_tmdb_title">The Movie Database (TMDB)</string>
-    <string name="licenses_attributions_tmdb_body">Nuvio, film ve dizi meta verileri, görseller, fragmanlar, oyuncular, yapım detayları, koleksiyonlar ve öneriler için TMDB API\'sini kullanır. Bu ürün TMDB API\'sini kullanır ancak TMDB tarafından onaylanmamıştır veya sertifikalandırılmamıştır.</string>
+    <string name="licenses_attributions_tmdb_body">Royal, film ve dizi meta verileri, görseller, fragmanlar, oyuncular, yapım detayları, koleksiyonlar ve öneriler için TMDB API\'sini kullanır. Bu ürün TMDB API\'sini kullanır ancak TMDB tarafından onaylanmamıştır veya sertifikalandırılmamıştır.</string>
     <string name="licenses_attributions_trakt_title">Trakt</string>
-    <string name="licenses_attributions_trakt_body">Nuvio, hesap doğrulama, izleme geçmişi, ilerleme senkronizasyonu, kütüphane verileri, puanlar, listeler ve yorumlar için Trakt\'a bağlanır. Nuvio Trakt ile bağlantılı veya onaylanmış değildir.</string>
+    <string name="licenses_attributions_trakt_body">Royal, hesap doğrulama, izleme geçmişi, ilerleme senkronizasyonu, kütüphane verileri, puanlar, listeler ve yorumlar için Trakt\'a bağlanır. Royal Trakt ile bağlantılı veya onaylanmış değildir.</string>
     <string name="licenses_attributions_mdblist_title">MDBList</string>
     <string name="licenses_attributions_mdblist_body">Nuvio, puanlar ve harici skor sağlayıcı verileri için MDBList\'i kullanır. Nuvio MDBList ile bağlantılı veya onaylanmış değildir.</string>
     <string name="licenses_attributions_introdb_title">IntroDB</string>
@@ -459,8 +459,8 @@
     <string name="advanced_section_cache">Önbellek</string>
     <string name="advanced_fast_horizontal_navigation">Hızlı Yatay Gezinme</string>
     <string name="advanced_fast_horizontal_navigation_subtitle">Performans için yatay listelerde daha pürüzsüz kaydırma sağlar</string>
-    <string name="advanced_nuvio_focus_scroll">Nuvio Odak Kaydırma</string>
-    <string name="advanced_nuvio_focus_scroll_subtitle">Varsayılan Android TV odak davranışını Nuvio\'nun özel kaydırma sistemi ile değiştirir</string>
+    <string name="advanced_nuvio_focus_scroll">Royal Odak Kaydırma</string>
+    <string name="advanced_nuvio_focus_scroll_subtitle">Varsayılan Android TV odak davranışını Royal\'in özel kaydırma sistemi ile değiştirir</string>
     <string name="advanced_memory_only_vertical_scroll">Yalnızca Bellekte Dikey Kaydırma</string>
     <string name="advanced_memory_only_vertical_scroll_subtitle">Tüm listeyi bellekte tutarak dikey gezinmeyi hızlandırır (daha fazla RAM kullanır)</string>
     <string name="advanced_compose_highlighter">Compose Vurgulayıcı</string>
@@ -940,21 +940,21 @@
     <string name="trakt_watch_progress_title">İzleme İlerlemesi</string>
     <string name="trakt_watch_progress_subtitle">Devam etme ve izlemeye devam etme için hangi ilerleme kaynağının kullanılacağını seçin</string>
     <string name="trakt_watch_progress_dialog_title">İzleme İlerlemesi</string>
-    <string name="trakt_watch_progress_dialog_subtitle">Trakt scrobbling aktifken devam etme ve izlemeye devam etmenin Trakt mı yoksa Nuvio Sync mi kullanacağını seçin.</string>
+    <string name="trakt_watch_progress_dialog_subtitle">Trakt scrobbling aktifken devam etme ve izlemeye devam etmenin Trakt mı yoksa Royal Sync mi kullanacağını seçin.</string>
     <string name="trakt_watch_progress_source_trakt">Trakt</string>
-    <string name="trakt_watch_progress_source_nuvio">Nuvio Sync</string>
+    <string name="trakt_watch_progress_source_nuvio">Royal Sync</string>
     <string name="trakt_library_source_title">Kütüphane Kaynağı</string>
     <string name="trakt_library_source_subtitle">Koleksiyonunuzu kaydetmek ve görüntülemek için hangi kütüphanenin kullanılacağını seçin</string>
     <string name="trakt_library_source_dialog_title">Kütüphane Kaynağı</string>
     <string name="trakt_library_source_dialog_subtitle">Kütüphane öğelerinizi nerede kaydedeceğinizi ve yöneteceğinizi seçin</string>
     <string name="trakt_library_source_trakt">Trakt</string>
-    <string name="trakt_library_source_nuvio">Nuvio Kütüphanesi</string>
+    <string name="trakt_library_source_nuvio">Royal Kütüphanesi</string>
     <string name="trakt_library_source_trakt_selected">Trakt kütüphanesi seçildi</string>
-    <string name="trakt_library_source_nuvio_selected">Nuvio kütüphanesi seçildi</string>
+    <string name="trakt_library_source_nuvio_selected">Royal kütüphanesi seçildi</string>
     <string name="trakt_setting_on">Açık</string>
     <string name="trakt_setting_off">Kapalı</string>
     <string name="trakt_watch_progress_trakt_selected">İzleme ilerlemesi kaynağı Trakt olarak ayarlandı</string>
-    <string name="trakt_watch_progress_nuvio_selected">İzleme ilerlemesi kaynağı Nuvio Sync olarak ayarlandı</string>
+    <string name="trakt_watch_progress_nuvio_selected">İzleme ilerlemesi kaynağı Royal Sync olarak ayarlandı</string>
     <string name="trakt_continue_watching_window">İzlemeye Devam Etme Penceresi</string>
     <string name="trakt_continue_watching_subtitle">İzlemeye devam etme için dikkate alınan Trakt geçmişi</string>
     <string name="trakt_unaired_next_up">Yayınlanmamış Sıradaki Bölümler</string>
@@ -1423,7 +1423,7 @@
     <string name="library_delete_subtitle">Bu işlem listeyi ve içindeki tüm öğeleri Trakt hesabınızdan kaldırır.</string>
     <string name="library_delete_confirm">Sil</string>
     <string name="library_source_local">YEREL</string>
-    <string name="library_source_nuvio">NUVİO</string>
+    <string name="library_source_nuvio">ROYAL</string>
     <string name="library_source_trakt">TRAKT</string>
     <string name="library_watchlist">İzleme Listesi</string>
     <string name="library_syncing_library">Kütüphane senkronize ediliyor\u2026</string>
@@ -1446,10 +1446,17 @@
     <string name="account_total_label">Toplam</string>
     <string name="account_loading_sync">Senkronizasyon verileri yükleniyor\u2026</string>
     <string name="account_sign_out">Oturumu Kapat</string>
+    <string name="account_signin_normal_title">E-Posta ile Giriş</string>
+    <string name="account_signin_normal_subtitle">E-posta ve sifre ile giris yapin.</string>
 
     <!-- AuthSignInScreen -->
     <string name="auth_signin_title">Oturum Aç</string>
-    <string name="auth_signin_tv_disabled">TV\'de E-Posta / Parola girişi devre dışı. QR ile Giriş sekmesinden devam edin.</string>
+    <string name="auth_signin_description">Devam etmek için e-posta ve şifrenizle giriş yapın.</string>
+    <string name="auth_signin_email_placeholder">E-posta adresi</string>
+    <string name="auth_signin_password_placeholder">Şifre</string>
+    <string name="auth_signin_submit">Giriş Yap</string>
+    <string name="auth_signin_create_account">Hesap Oluştur</string>
+    <string name="auth_signin_loading">Giriş yapılıyor\u2026</string>
     <string name="auth_signin_qr_btn">QR Kod ile Devam Et</string>
 
     <!-- AuthQrSignInScreen -->
@@ -1470,6 +1477,15 @@
     <string name="auth_qr_please_wait">Lütfen bekleyin\u2026</string>
     <string name="auth_qr_continue">Devam Et</string>
     <string name="auth_qr_back">Geri</string>
+
+    <!-- LicenseStatusScreen -->
+    <string name="license_status_account_title">Hesap girişi</string>
+    <string name="license_status_account_subtitle">Önce lisans sahibine ait e-posta hesabıyla giriş yapın.</string>
+    <string name="license_status_signed_in_as">Giriş yapılan hesap: %1$s</string>
+    <string name="license_status_switch_account">Hesabı değiştir</string>
+    <string name="license_status_account_mismatch_title">Lisans hesabıyla eşleşmiyor</string>
+    <string name="license_status_account_required_subtitle">Bu lisans kodu başka bir hesaba tanımlı. Devam etmek için doğru hesapla giriş yapın.</string>
+    <string name="license_status_account_mismatch_subtitle">Bu lisans kodu başka bir hesaba tanımlı.</string>
 
     <!-- SyncCodeGenerateScreen -->
     <string name="sync_generate_title">Senkronizasyon Kodu Oluştur</string>
@@ -1763,7 +1779,7 @@
     <string name="cd_preview">Önizle</string>
     <string name="cd_test">Test et</string>
     <string name="cd_unlink">Bağlantıyı kes</string>
-    <string name="cd_nuvio_logo">NuvioTV</string>
+    <string name="cd_nuvio_logo">Royal TV</string>
     <string name="cd_trakt_logo">Trakt logosu</string>
     <string name="cd_trakt_qr">Trakt etkinleştirme QR kodu</string>
     <string name="cd_imdb">IMDb</string>
@@ -1774,7 +1790,7 @@
     <string name="cd_expand">%1$s öğesini genişlet</string>
     <string name="cd_collapse">%1$s öğesini daralt</string>
     <string name="cd_qr_login">QR giriş kodu</string>
-    <string name="cd_nuvio">Nuvio</string>
+    <string name="cd_nuvio">Royal</string>
 
     <!-- Debug -->
     <string name="debug_signin_success">Giriş başarılı</string>

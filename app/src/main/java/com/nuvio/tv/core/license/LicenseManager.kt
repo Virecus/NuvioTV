@@ -1,6 +1,8 @@
 package com.nuvio.tv.core.license
 
+import com.nuvio.tv.core.auth.AuthManager
 import com.nuvio.tv.data.local.LicenseCodeDataStore
+import com.nuvio.tv.domain.model.AuthState
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
@@ -10,6 +12,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -34,6 +37,7 @@ sealed interface LicenseStatus {
     data object Missing : LicenseStatus
     data object NetworkError : LicenseStatus
     data class Invalid(val attemptedCode: String?) : LicenseStatus
+    data class AccountMismatch(val record: LicenseRecord, val signedInEmail: String?) : LicenseStatus
     data class NotStarted(val record: LicenseRecord, val startsAt: Instant) : LicenseStatus
     data class Expired(val record: LicenseRecord, val deadlineAt: Instant, val expiredDaysAgo: Long) : LicenseStatus
     data class Valid(val record: LicenseRecord, val deadlineAt: Instant, val remainingDays: Long) : LicenseStatus
@@ -41,7 +45,8 @@ sealed interface LicenseStatus {
 
 @Singleton
 class LicenseManager @Inject constructor(
-    private val licenseCodeDataStore: LicenseCodeDataStore
+    private val licenseCodeDataStore: LicenseCodeDataStore,
+    private val authManager: AuthManager
 ) {
     companion object {
         private const val LICENSE_REGISTRY_URL =
@@ -53,9 +58,11 @@ class LicenseManager @Inject constructor(
     val savedLicenseCode: Flow<String?> = licenseCodeDataStore.licenseCode
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val status: Flow<LicenseStatus> = savedLicenseCode.transformLatest { code ->
+    val status: Flow<LicenseStatus> = combine(savedLicenseCode, authManager.authState) { code, authState ->
+        code to authState
+    }.transformLatest { (code, authState) ->
         emit(LicenseStatus.Loading)
-        emit(resolveStatus(code))
+        emit(resolveStatus(code, authState.emailOrNull()))
     }
 
     suspend fun submitLicenseCode(rawCode: String): LicenseStatus {
@@ -65,20 +72,25 @@ class LicenseManager @Inject constructor(
             return LicenseStatus.Missing
         }
         licenseCodeDataStore.setLicenseCode(normalized)
-        return resolveStatus(normalized)
+        return resolveStatus(normalized, authManager.authState.value.emailOrNull())
     }
 
     suspend fun clearLicenseCode() {
         licenseCodeDataStore.clearLicenseCode()
     }
 
-    suspend fun resolveStatus(rawCode: String?): LicenseStatus {
+    suspend fun resolveStatus(rawCode: String?, signedInEmail: String?): LicenseStatus {
         val code = rawCode?.trim().orEmpty()
         if (code.isBlank()) return LicenseStatus.Missing
 
         val registry = fetchRegistry() ?: return LicenseStatus.NetworkError
         val record = registry.firstOrNull { it.licenceCode.equals(code, ignoreCase = true) }
             ?: return LicenseStatus.Invalid(rawCode)
+
+        val normalizedSignedInEmail = signedInEmail?.trim().orEmpty()
+        if (normalizedSignedInEmail.isBlank() || !record.email.equals(normalizedSignedInEmail, ignoreCase = true)) {
+            return LicenseStatus.AccountMismatch(record, signedInEmail)
+        }
 
         val now = Instant.now()
         val startedAt = runCatching { Instant.parse(record.startedAt) }.getOrElse {
@@ -113,4 +125,9 @@ class LicenseManager @Inject constructor(
             }
         }.getOrNull()
     }
+}
+
+private fun AuthState.emailOrNull(): String? = when (this) {
+    is AuthState.FullAccount -> email
+    else -> null
 }

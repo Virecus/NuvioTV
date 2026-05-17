@@ -973,7 +973,7 @@ fun NuvioNavHost(
                 showBuiltInHeader = !hideBuiltInHeaders,
                 onNavigateToTrakt = { navController.navigate(Screen.Trakt.route) },
                 onNavigateToAddons = { navController.navigate(Screen.AddonManager.route) },
-                onNavigateToAuthQrSignIn = { navController.navigate(Screen.AuthQrSignIn.route) },
+                onNavigateToAuthSignIn = { navController.navigate(Screen.AuthSignIn.route) },
                 onNavigateToLicenseStatus = { navController.navigate(Screen.LicenseStatus.route) },
                 onNavigateToManageProfiles = { navController.navigate(Screen.ManageProfiles.route) },
                 onNavigateToSupportersContributors = {
@@ -1111,7 +1111,6 @@ fun NuvioNavHost(
         composable(Screen.AuthSignIn.route) {
             AuthSignInScreen(
                 onBackPress = { navController.popBackStack() },
-                onNavigateToQrSignIn = { navController.navigate(Screen.AuthQrSignIn.route) },
                 onSuccess = { navController.popBackStack() }
             )
         }
