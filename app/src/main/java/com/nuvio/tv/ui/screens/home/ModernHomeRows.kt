@@ -117,6 +117,7 @@ import com.nuvio.tv.ui.util.recompositionHighlighter
 import com.nuvio.tv.ui.util.StableMap
 import com.nuvio.tv.ui.util.StableRef
 import com.nuvio.tv.ui.util.asStable
+import com.nuvio.tv.ui.util.rememberLongPressKeyTracker
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.debounce
 
@@ -374,11 +375,15 @@ private fun ModernCatalogRowItem(
             latestOnFocused()
             item.metaPreview?.let { latestOnItemFocus(it) }
             when (payload) {
-                is ModernPayload.Catalog -> onNavigateToDetail(
-                    payload.itemId,
-                    payload.itemType,
-                    payload.addonBaseUrl
-                )
+                is ModernPayload.Catalog -> {
+                    if (!payload.itemId.startsWith("__placeholder_")) {
+                        onNavigateToDetail(
+                            payload.itemId,
+                            payload.itemType,
+                            payload.addonBaseUrl
+                        )
+                    }
+                }
                 is ModernPayload.CollectionFolder -> onNavigateToFolderDetail(
                     payload.collectionId,
                     payload.folderId
@@ -997,7 +1002,7 @@ private fun ModernCarouselCard(
         // updates land instantly. Inside landscape we still adopt the enriched
         // URL when there was no logo to begin with — otherwise the card would
         // permanently fall back to the title text whenever the addon manifest
-        // ships items without a logo (e.g. AIO Metadata for some shows) even
+        // ships items without a logo even
         // though TMDB has one. Once we have any non-blank value we keep it
         // frozen to avoid mid-scroll flicker on enrichment refresh.
         if (!useLandscapeOverlayTreatment || frozenLogoUrl.value.isNullOrBlank()) {
@@ -1121,6 +1126,7 @@ private fun ModernCarouselCard(
             !effectiveLogoUrl.isNullOrBlank() &&
             !landscapeLogoLoadFailed
     var longPressTriggered by remember { mutableStateOf(false) }
+    val longPressKeyTracker = rememberLongPressKeyTracker()
     val backgroundCardColor = NuvioColors.BackgroundCard
     val focusRingColor = NuvioColors.FocusRing
     val titleMedium = MaterialTheme.typography.titleMedium
@@ -1195,16 +1201,20 @@ private fun ModernCarouselCard(
                             onLongPress()
                             return@onPreviewKeyEvent true
                         }
-                        val isLongPress = native.isLongPress || native.repeatCount > 0
-                        if (isLongPress && isSelectKey(native.keyCode)) {
+                    }
+                    if (longPressKeyTracker.handle(native, ::isSelectKey) {
                             longPressTriggered = true
                             onLongPress()
-                            return@onPreviewKeyEvent true
                         }
+                    ) {
+                        if (native.action == AndroidKeyEvent.ACTION_UP) {
+                            longPressTriggered = false
+                        }
+                        return@onPreviewKeyEvent true
                     }
                     if (native.action == AndroidKeyEvent.ACTION_UP &&
                         longPressTriggered &&
-                        isSelectKey(native.keyCode)
+                        (isSelectKey(native.keyCode) || native.keyCode == AndroidKeyEvent.KEYCODE_MENU)
                     ) {
                         longPressTriggered = false
                         return@onPreviewKeyEvent true
