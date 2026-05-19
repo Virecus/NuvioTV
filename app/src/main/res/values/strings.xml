@@ -1,6 +1,10 @@
 ﻿<resources>
     <string name="app_name">Royal</string>
     <string name="tv_channel_continue_watching">Continue Watching</string>
+    <string name="tv_channel_new_releases">Yeni Çıkanlar</string>
+    <string name="tv_channel_upcoming">Yakında</string>
+    <string name="tv_channel_popular_movies">Popüler Filmler</string>
+    <string name="tv_channel_top_rated_movies">En İyiler</string>
     <string name="type_movie">Movie</string>
     <string name="type_movies">Movies</string>
     <string name="type_series">Series</string>
@@ -481,6 +485,10 @@
     <string name="advanced_remember_last_profile_subtitle">Remember last selected profile at startup</string>
     <string name="settings_debug">Debug</string>
     <string name="settings_debug_subtitle">Developer tools and feature flags</string>
+    <string name="settings_extra">Extra Settings</string>
+    <string name="settings_extra_subtitle">Optional behaviors and comment display preferences</string>
+    <string name="extra_translate_trakt_comments_title">Translate Trakt comments to Turkish</string>
+    <string name="extra_translate_trakt_comments_subtitle">When enabled, Trakt movie and series comments are automatically translated to Turkish.</string>
     <string name="settings_plugins_section_subtitle">Manage repositories, providers, and plugin states</string>
     <string name="settings_account_section_subtitle">Account and sync status</string>
     <string name="account_stat_addons">addons</string>

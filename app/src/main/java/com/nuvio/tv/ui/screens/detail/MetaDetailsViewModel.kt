@@ -9,6 +9,7 @@ import com.nuvio.tv.core.player.StreamAutoPlayPolicy
 import com.nuvio.tv.core.network.NetworkResult
 import com.nuvio.tv.core.tmdb.TmdbMetadataService
 import com.nuvio.tv.core.tmdb.TmdbService
+import com.nuvio.tv.data.local.ExtraSettingsDataStore
 import com.nuvio.tv.data.local.LayoutPreferenceDataStore
 import com.nuvio.tv.data.local.PlayerSettingsDataStore
 import com.nuvio.tv.data.local.TraktAuthDataStore
@@ -16,6 +17,7 @@ import com.nuvio.tv.data.local.TraktSettingsDataStore
 import com.nuvio.tv.data.local.TmdbSettingsDataStore
 import com.nuvio.tv.data.repository.ImdbEpisodeRatingsRepository
 import com.nuvio.tv.data.repository.MDBListRepository
+import com.nuvio.tv.data.repository.TraktCommentTranslationService
 import com.nuvio.tv.data.repository.TraktCommentsService
 import com.nuvio.tv.data.repository.TraktRelatedService
 import com.nuvio.tv.data.repository.parseContentIds
@@ -85,8 +87,10 @@ class MetaDetailsViewModel @Inject constructor(
     private val trailerSettingsDataStore: TrailerSettingsDataStore,
     private val traktAuthDataStore: TraktAuthDataStore,
     private val traktCommentsService: TraktCommentsService,
+    private val traktCommentTranslationService: TraktCommentTranslationService,
     private val traktRelatedService: TraktRelatedService,
     private val traktSettingsDataStore: TraktSettingsDataStore,
+    private val extraSettingsDataStore: ExtraSettingsDataStore,
     private val layoutPreferenceDataStore: LayoutPreferenceDataStore,
     private val playerSettingsDataStore: PlayerSettingsDataStore,
     private val watchedSeriesStateHolder: com.nuvio.tv.data.local.WatchedSeriesStateHolder,
@@ -134,6 +138,7 @@ class MetaDetailsViewModel @Inject constructor(
     private var hideUnreleasedContent = false
     private var traktCommentsEnabled = false
     private var traktAuthenticated = false
+    private var translateTraktCommentsToTurkish = false
     private var moreLikeThisSourcePreference = com.nuvio.tv.data.local.MoreLikeThisSourcePreference.TRAKT
 
     /** Content ID used for watch-progress and watched-items lookups.
@@ -192,14 +197,16 @@ class MetaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 traktSettingsDataStore.showMetaComments,
-                traktAuthDataStore.isAuthenticated
-            ) { enabled, authenticated ->
-                enabled to authenticated
+                traktAuthDataStore.isAuthenticated,
+                extraSettingsDataStore.translateTraktCommentsToTurkish
+            ) { enabled, authenticated, translateComments ->
+                Triple(enabled, authenticated, translateComments)
             }
                 .distinctUntilChanged()
-                .collectLatest { (enabled, authenticated) ->
+                .collectLatest { (enabled, authenticated, translateComments) ->
                     traktCommentsEnabled = enabled
                     traktAuthenticated = authenticated
+                    translateTraktCommentsToTurkish = translateComments
 
                     val meta = _uiState.value.meta
                     val shouldShow = enabled && authenticated && supportsComments(meta)
@@ -893,13 +900,14 @@ class MetaDetailsViewModel @Inject constructor(
                     page = 1,
                     forceRefresh = forceRefresh
                 )
+                val translatedItems = translateCommentsIfNeeded(page.items)
 
                 _uiState.update { state ->
                     if (state.meta == null || state.meta.id != meta.id) {
                         state
                     } else {
                         state.copy(
-                            comments = page.items,
+                            comments = translatedItems,
                             commentsCurrentPage = page.currentPage,
                             commentsPageCount = page.pageCount,
                             isCommentsLoading = false,
@@ -907,7 +915,7 @@ class MetaDetailsViewModel @Inject constructor(
                             commentsError = null,
                             shouldShowCommentsSection = true,
                             selectedComment = state.selectedComment?.let { selected ->
-                                page.items.firstOrNull { it.id == selected.id }
+                                translatedItems.firstOrNull { it.id == selected.id }
                             }
                         )
                     }
@@ -969,12 +977,13 @@ class MetaDetailsViewModel @Inject constructor(
                     targetEpisode = currentCommentsEpisodeTarget(meta),
                     page = nextPage
                 )
+                val translatedItems = translateCommentsIfNeeded(page.items)
 
                 _uiState.update { current ->
                     if (current.meta?.id != meta.id) {
                         current
                     } else {
-                        val appended = page.items.filterNot { fetched ->
+                        val appended = translatedItems.filterNot { fetched ->
                             current.comments.any { existing -> existing.id == fetched.id }
                         }
                         val updatedComments = current.comments + appended
@@ -1003,6 +1012,17 @@ class MetaDetailsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private suspend fun translateCommentsIfNeeded(
+        comments: List<TraktCommentReview>
+    ): List<TraktCommentReview> {
+        if (!translateTraktCommentsToTurkish || comments.isEmpty()) {
+            return comments
+        }
+        return runCatching {
+            traktCommentTranslationService.translateCommentsToTurkish(comments)
+        }.getOrDefault(comments)
     }
 
     private fun openCommentOverlay(review: TraktCommentReview) {

@@ -1,6 +1,10 @@
 ﻿<resources>
     <string name="app_name">Royal</string>
     <string name="tv_channel_continue_watching">İzlemeye Devam Et</string>
+    <string name="tv_channel_new_releases">Yeni Çıkanlar</string>
+    <string name="tv_channel_upcoming">Yakında</string>
+    <string name="tv_channel_popular_movies">Popüler Filmler</string>
+    <string name="tv_channel_top_rated_movies">En İyiler</string>
     <string name="type_movie">Film</string>
     <string name="type_movies">Filmler</string>
     <string name="type_series">Dizi</string>
@@ -475,6 +479,10 @@
     <string name="advanced_remember_last_profile_subtitle">Uygulama açılışında profil seçme ekranını atlar</string>
     <string name="settings_debug">Hata Ayıklama</string>
     <string name="settings_debug_subtitle">Geliştirici araçları ve özellik bayrakları</string>
+    <string name="settings_extra">Ek Ayarlar</string>
+    <string name="settings_extra_subtitle">İsteğe bağlı davranışlar ve yorum görünüm tercihleri</string>
+    <string name="extra_translate_trakt_comments_title">Trakt yorumlarını Türkçeye çevir</string>
+    <string name="extra_translate_trakt_comments_subtitle">Açık olduğunda Trakt film ve dizi yorumları otomatik olarak Türkçeye çevrilir.</string>
     <string name="settings_plugins_section_subtitle">Depoları, sağlayıcıları ve eklenti durumlarını yönetin</string>
     <string name="settings_account_section_subtitle">Hesap ve senkronizasyon durumu</string>
     <string name="account_stat_addons">eklentiler</string>

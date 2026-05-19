@@ -22,6 +22,26 @@ import javax.inject.Singleton
 
 private const val TAG = "TvChannelSync"
 
+enum class AndroidTvLauncherChannelType(
+    val providerId: String,
+    val displayNameRes: Int
+) {
+    CONTINUE_WATCHING("continue_watching", R.string.tv_channel_continue_watching),
+    NEW_RELEASES("tmdb_new_releases", R.string.tv_channel_new_releases),
+    UPCOMING("tmdb_upcoming", R.string.tv_channel_upcoming),
+    POPULAR_MOVIES("tmdb_popular_movies", R.string.tv_channel_popular_movies),
+    TOP_RATED_MOVIES("tmdb_top_rated_movies", R.string.tv_channel_top_rated_movies);
+
+    companion object {
+        fun tmdbMovieChannels(): List<AndroidTvLauncherChannelType> = listOf(
+            NEW_RELEASES,
+            UPCOMING,
+            POPULAR_MOVIES,
+            TOP_RATED_MOVIES
+        )
+    }
+}
+
 @Singleton
 class AndroidTvChannelManager @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -34,10 +54,12 @@ class AndroidTvChannelManager @Inject constructor(
      * Returns the channel id, creating or reusing the channel as needed.
      * Returns null on non-leanback devices or on failure.
      */
-    suspend fun ensureChannel(): Long? = withContext(Dispatchers.IO) {
+    suspend fun ensureChannel(
+        channelType: AndroidTvLauncherChannelType = AndroidTvLauncherChannelType.CONTINUE_WATCHING
+    ): Long? = withContext(Dispatchers.IO) {
         if (!isSupported()) return@withContext null
         runCatching {
-            val stored = prefs.getChannelId()
+            val stored = prefs.getChannelId(channelType)
             if (stored != null) {
                 val cursor = context.contentResolver.query(
                     TvContractCompat.buildChannelUri(stored),
@@ -46,7 +68,7 @@ class AndroidTvChannelManager @Inject constructor(
                 )
                 cursor?.use { if (it.moveToFirst()) return@runCatching stored }
                 Log.d(TAG, "Stored channel $stored gone; recreating")
-                prefs.clearChannelId()
+                prefs.clearChannelId(channelType)
             }
 
             val orphan = context.contentResolver.query(
@@ -62,7 +84,7 @@ class AndroidTvChannelManager @Inject constructor(
                 if (idIdx < 0 || providerIdx < 0) return@use null
                 while (c.moveToNext()) {
                     val providerId = c.getString(providerIdx)
-                    if (providerId != null && providerId.startsWith(context.packageName)) {
+                    if (providerId == buildChannelProviderId(channelType)) {
                         return@use c.getLong(idIdx)
                     }
                 }
@@ -70,7 +92,7 @@ class AndroidTvChannelManager @Inject constructor(
             }
             if (orphan != null) {
                 Log.d(TAG, "Reusing orphaned channel $orphan")
-                prefs.setChannelId(orphan)
+                prefs.setChannelId(channelType, orphan)
                 writeChannelLogo(orphan)
                 return@runCatching orphan
             }
@@ -82,7 +104,8 @@ class AndroidTvChannelManager @Inject constructor(
             )
             val channel = Channel.Builder()
                 .setType(TvContractCompat.Channels.TYPE_PREVIEW)
-                .setDisplayName(context.getString(R.string.tv_channel_continue_watching))
+                .setDisplayName(context.getString(channelType.displayNameRes))
+                .setInternalProviderId(buildChannelProviderId(channelType))
                 .setAppLinkIntentUri(appLinkUri)
                 .build()
 
@@ -92,10 +115,10 @@ class AndroidTvChannelManager @Inject constructor(
             ) ?: return@runCatching null
 
             val id = ContentUris.parseId(inserted)
-            prefs.setChannelId(id)
+            prefs.setChannelId(channelType, id)
             writeChannelLogo(id)
             TvContractCompat.requestChannelBrowsable(context, id)
-            Log.d(TAG, "Created channel id=$id")
+            Log.d(TAG, "Created channel id=$id type=${channelType.providerId}")
             id
         }.onFailure { Log.w(TAG, "ensureChannel failed", it) }.getOrNull()
     }
@@ -105,9 +128,26 @@ class AndroidTvChannelManager @Inject constructor(
      * removes rows that are no longer in the list (completed or dismissed).
      */
     suspend fun reconcile(items: List<WatchProgress>) = withContext(Dispatchers.IO) {
+        reconcileChannel(AndroidTvLauncherChannelType.CONTINUE_WATCHING, items)
+    }
+
+    suspend fun reconcileMovieChannel(
+        channelType: AndroidTvLauncherChannelType,
+        items: List<WatchProgress>
+    ) = withContext(Dispatchers.IO) {
+        require(channelType != AndroidTvLauncherChannelType.CONTINUE_WATCHING) {
+            "Use reconcile() for continue watching channel"
+        }
+        reconcileChannel(channelType, items)
+    }
+
+    private suspend fun reconcileChannel(
+        channelType: AndroidTvLauncherChannelType,
+        items: List<WatchProgress>
+    ) = withContext(Dispatchers.IO) {
         if (!isSupported()) return@withContext
         runCatching {
-            val channelId = ensureChannel() ?: return@runCatching
+            val channelId = ensureChannel(channelType) ?: return@runCatching
             val existing = queryExistingPrograms(channelId)
             val desiredKeys = items.map { progressKey(it) }.toSet()
 
@@ -135,23 +175,30 @@ class AndroidTvChannelManager @Inject constructor(
                 context.contentResolver.insert(
                     TvContractCompat.PreviewPrograms.CONTENT_URI, values
                 )
-                Log.d(TAG, "${if (existingRow != null) "Refreshed" else "Inserted"} program key=$key pos=${values.getAsInteger("last_playback_position_millis")} dur=${values.getAsInteger("duration_millis")} pct=${progress.progressPercent}")
+                Log.d(
+                    TAG,
+                    "${if (existingRow != null) "Refreshed" else "Inserted"} program key=$key channel=${channelType.providerId}"
+                )
             }
         }.onFailure { Log.w(TAG, "reconcile failed", it) }
     }
 
     /** Removes all preview programs from our channel (used on sign-out / history clear). */
     suspend fun clearAll() = withContext(Dispatchers.IO) {
+        clearAllForChannel(AndroidTvLauncherChannelType.CONTINUE_WATCHING)
+    }
+
+    suspend fun clearAllForChannel(channelType: AndroidTvLauncherChannelType) = withContext(Dispatchers.IO) {
         if (!isSupported()) return@withContext
         runCatching {
-            val channelId = prefs.getChannelId() ?: return@runCatching
+            val channelId = prefs.getChannelId(channelType) ?: return@runCatching
             val rows = queryExistingPrograms(channelId)
             rows.values.forEach { rowId ->
                 context.contentResolver.delete(
                     TvContractCompat.buildPreviewProgramUri(rowId), null, null
                 )
             }
-            Log.d(TAG, "Cleared ${rows.size} programs for channel $channelId")
+            Log.d(TAG, "Cleared ${rows.size} programs for channel $channelId type=${channelType.providerId}")
         }.onFailure { Log.w(TAG, "clearAll failed", it) }
     }
 
@@ -182,6 +229,9 @@ class AndroidTvChannelManager @Inject constructor(
         }
         return result
     }
+
+    private fun buildChannelProviderId(channelType: AndroidTvLauncherChannelType): String =
+        "${context.packageName}.${channelType.providerId}"
 
     private fun buildProgramValues(
         progress: WatchProgress,

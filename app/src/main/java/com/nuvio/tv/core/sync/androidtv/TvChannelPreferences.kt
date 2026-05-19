@@ -16,16 +16,17 @@ private val Context.tvChannelDataStore by preferencesDataStore(name = "tv_channe
 class TvChannelPreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val channelIdKey = longPreferencesKey("continue_watching_channel_id")
+    private fun channelIdKey(channelType: AndroidTvLauncherChannelType) =
+        longPreferencesKey("${channelType.providerId}_channel_id")
 
-    suspend fun getChannelId(): Long? =
-        context.tvChannelDataStore.data.map { it[channelIdKey] }.first()
+    suspend fun getChannelId(channelType: AndroidTvLauncherChannelType): Long? =
+        context.tvChannelDataStore.data.map { it[channelIdKey(channelType)] }.first()
 
-    suspend fun setChannelId(id: Long) {
-        context.tvChannelDataStore.edit { it[channelIdKey] = id }
+    suspend fun setChannelId(channelType: AndroidTvLauncherChannelType, id: Long) {
+        context.tvChannelDataStore.edit { it[channelIdKey(channelType)] = id }
     }
 
-    suspend fun clearChannelId() {
-        context.tvChannelDataStore.edit { it.remove(channelIdKey) }
+    suspend fun clearChannelId(channelType: AndroidTvLauncherChannelType) {
+        context.tvChannelDataStore.edit { it.remove(channelIdKey(channelType)) }
     }
 }

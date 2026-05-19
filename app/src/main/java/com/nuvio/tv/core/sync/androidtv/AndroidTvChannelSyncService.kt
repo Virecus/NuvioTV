@@ -45,7 +45,8 @@ class AndroidTvChannelSyncService @Inject constructor(
     private val cwEnrichmentCache: ContinueWatchingEnrichmentCache,
     private val layoutPreferenceDataStore: LayoutPreferenceDataStore,
     private val traktSettingsDataStore: TraktSettingsDataStore,
-    private val tvRecommendationManager: TvRecommendationManager
+    private val tvRecommendationManager: TvRecommendationManager,
+    private val tmdbTvMovieChannelService: TmdbTvMovieChannelService
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -56,6 +57,9 @@ class AndroidTvChannelSyncService @Inject constructor(
             return
         }
         TvChannelRefreshJobService.schedulePeriodic(context)
+        scope.launch {
+            refreshAllLauncherChannels()
+        }
 
         scope.launch {
             // Observe cache snapshot updates and settings changes to trigger reconciliation.
@@ -119,6 +123,11 @@ class AndroidTvChannelSyncService @Inject constructor(
             }
             tvRecommendationManager.updateWatchNextFromCwItems(cwItems)
         }
+    }
+
+    suspend fun refreshAllLauncherChannels() {
+        reconcileFromCache()
+        tmdbTvMovieChannelService.refreshMovieChannels()
     }
 
     /**

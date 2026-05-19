@@ -62,8 +62,8 @@ class TvChannelRefreshJobService : JobService() {
                 // Read from CW enrichment cache and reconcile with current settings.
                 // The cache is on disk so it's available even when the app hasn't been
                 // in the foreground recently.
-                syncService.reconcileFromCache()
-                Log.d(TAG, "Background job: reconciled from CW cache")
+                syncService.refreshAllLauncherChannels()
+                Log.d(TAG, "Background job: refreshed launcher channels")
             } catch (e: Exception) {
                 Log.w(TAG, "Background job reconcile failed", e)
             } finally {

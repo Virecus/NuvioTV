@@ -76,7 +76,8 @@ internal enum class SettingsCategory {
     ADVANCED,
     TRAKT,
     ABOUT,
-    DEBUG
+    DEBUG,
+    EXTRA
 }
 
 private enum class IntegrationSettingsSection {
@@ -195,6 +196,13 @@ private fun rememberSettingsSectionSpecs() = listOf(
         icon = Icons.Default.BugReport,
         subtitle = stringResource(R.string.settings_debug_subtitle),
         destination = SettingsSectionDestination.Inline
+    ),
+    SettingsSectionSpec(
+        category = SettingsCategory.EXTRA,
+        title = stringResource(R.string.settings_extra),
+        icon = Icons.Default.Settings,
+        subtitle = stringResource(R.string.settings_extra_subtitle),
+        destination = SettingsSectionDestination.Inline
     )
 )
 
@@ -243,6 +251,7 @@ fun SettingsScreen(
                 SettingsCategory.PLUGINS -> AppFeaturePolicy.pluginsEnabled && !isEssentialMode
                 SettingsCategory.INTEGRATION -> true
                 SettingsCategory.ADVANCED -> true
+                SettingsCategory.EXTRA -> true
                 else -> true
             }
         }
@@ -265,7 +274,8 @@ fun SettingsScreen(
                 SettingsCategory.INTEGRATION to FocusRequester(),
                 SettingsCategory.PLAYBACK to FocusRequester(),
                 SettingsCategory.ADVANCED to FocusRequester(),
-                SettingsCategory.ABOUT to FocusRequester()
+                SettingsCategory.ABOUT to FocusRequester(),
+                SettingsCategory.EXTRA to FocusRequester()
             )
     }
     val railContainerFocusRequester = remember { FocusRequester() }
@@ -519,6 +529,13 @@ fun SettingsScreen(
                             onNavigateToLicenseStatus = onNavigateToLicenseStatus
                         )
                         SettingsCategory.DEBUG -> DebugSettingsContent()
+                        SettingsCategory.EXTRA -> ExtraSettingsContent(
+                            initialFocusRequester = if (allowDetailAutofocus) {
+                                contentFocusRequesters[SettingsCategory.EXTRA]
+                            } else {
+                                null
+                            }
+                        )
                         SettingsCategory.TRAKT -> Unit
                     }
                 }
