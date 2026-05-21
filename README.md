@@ -1,14 +1,5 @@
 <div align="center">
 
-  <br />
-  <br />
-
-  [![Contributors][contributors-shield]][contributors-url]
-  [![Forks][forks-shield]][forks-url]
-  [![Stargazers][stars-shield]][stars-url]
-  [![Issues][issues-shield]][issues-url]
-  [![License][license-shield]][license-url]
-
   <p>
     A modern Android TV media player powered by the Stremio addon ecosystem.
     <br />
