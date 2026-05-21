@@ -77,8 +77,9 @@ class TmdbTvMovieChannelService @Inject constructor(
             ?: result.originalTitle?.takeIf { it.isNotBlank() }
             ?: return null
         val contentId = "tmdb:${result.id}"
-        val backdrop = result.backdropPath?.let { "$TMDB_IMAGE_BASE_URL$it" }
         val poster = result.posterPath?.let { "$TMDB_POSTER_BASE_URL$it" }
+            ?: return null
+        val backdrop = result.backdropPath?.let { "$TMDB_IMAGE_BASE_URL$it" }
         return WatchProgress(
             contentId = contentId,
             contentType = "movie",

@@ -162,7 +162,7 @@ class AndroidTvChannelManager @Inject constructor(
 
             items.forEachIndexed { index, progress ->
                 val key = progressKey(progress)
-                val values = buildProgramValues(progress, channelId, index, key)
+                val values = buildProgramValues(progress, channelType, channelId, index, key)
                 val existingRow = existing[key]
                 if (existingRow != null) {
                     // Delete + re-insert instead of UPDATE: launchers (e.g. Projectivy) only
@@ -235,6 +235,7 @@ class AndroidTvChannelManager @Inject constructor(
 
     private fun buildProgramValues(
         progress: WatchProgress,
+        channelType: AndroidTvLauncherChannelType,
         channelId: Long,
         sortOrder: Int,
         key: String
@@ -261,9 +262,15 @@ class AndroidTvChannelManager @Inject constructor(
             .setInternalProviderId(key)
             .setWeight(Int.MAX_VALUE - sortOrder)
 
-        // Backdrop/poster fills the tile via posterArt; logo goes to the dedicated logo column
-        // so the launcher renders it as a small badge overlay on focus.
+        // TMDB discovery channels should use movie posters in portrait form.
+        // Continue Watching keeps preferring backdrops because resume tiles read better wide.
+        // Discovery channels stay portrait-only; never fall back to wide backdrops there.
         val (imageUri, aspectRatio) = when {
+            channelType != AndroidTvLauncherChannelType.CONTINUE_WATCHING &&
+                !progress.poster.isNullOrBlank() ->
+                progress.poster to TvContractCompat.PreviewPrograms.ASPECT_RATIO_2_3
+            channelType != AndroidTvLauncherChannelType.CONTINUE_WATCHING ->
+                null to null
             !progress.backdrop.isNullOrBlank() ->
                 progress.backdrop to TvContractCompat.PreviewPrograms.ASPECT_RATIO_16_9
             !progress.poster.isNullOrBlank() ->
