@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.coroutineContext
+import com.lagradost.nicehttp.ignoreAllSSLErrors
 import okhttp3.Call
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
@@ -55,7 +56,7 @@ class PluginRuntime @Inject constructor() {
         .writeTimeout(30, TimeUnit.SECONDS)
         .followRedirects(true)
         .followSslRedirects(true)
-        .proxy(java.net.Proxy.NO_PROXY)
+        .ignoreAllSSLErrors()
         .build()
 
     // Pre-compiled regex for :contains() selector conversion
@@ -505,7 +506,7 @@ class PluginRuntime @Inject constructor() {
                 inFlightCalls.remove(call)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Fetch error: ${e.message}")
+            Log.e(TAG, "Fetch error: ${e.message}", e)
             gson.toJson(mapOf(
                 "ok" to false,
                 "status" to 0,
@@ -1174,6 +1175,49 @@ class PluginRuntime @Inject constructor() {
                 }
                 throw new Error("Module '" + moduleName + "' is not available");
             };
+
+            // Buffer polyfill (Node.js compat for plugins that use Buffer.from / Buffer.alloc)
+            if (typeof Buffer === 'undefined') {
+                var Buffer = {
+                    from: function(data, encoding) {
+                        if (typeof data === 'string') {
+                            if (encoding === 'base64') {
+                                var decoded = atob(data.replace(/-/g, '+').replace(/_/g, '/'));
+                                return {
+                                    _data: decoded,
+                                    toString: function(enc) {
+                                        if (enc === 'latin1' || enc === 'binary') return this._data;
+                                        if (enc === 'hex') {
+                                            var h = '';
+                                            for (var i = 0; i < this._data.length; i++) {
+                                                var b = this._data.charCodeAt(i) & 0xFF;
+                                                h += ('0' + b.toString(16)).slice(-2);
+                                            }
+                                            return h;
+                                        }
+                                        return this._data;
+                                    },
+                                    length: decoded.length
+                                };
+                            }
+                            return {
+                                _data: data,
+                                toString: function(enc) { return this._data; },
+                                length: data.length
+                            };
+                        }
+                        return { _data: '', toString: function() { return ''; }, length: 0 };
+                    },
+                    alloc: function(size, fill) {
+                        var s = '';
+                        var ch = fill !== undefined ? String.fromCharCode(fill) : '\0';
+                        for (var i = 0; i < size; i++) s += ch;
+                        return { _data: s, toString: function() { return this._data; }, length: size };
+                    },
+                    isBuffer: function(obj) { return false; }
+                };
+                globalThis.Buffer = Buffer;
+            }
 
             // Array.prototype.flat polyfill
             if (!Array.prototype.flat) {
