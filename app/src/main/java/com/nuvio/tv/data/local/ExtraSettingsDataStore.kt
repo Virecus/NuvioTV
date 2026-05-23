@@ -19,10 +19,14 @@ class ExtraSettingsDataStore @Inject constructor(
     companion object {
         private const val FEATURE = "extra_settings"
         const val DEFAULT_TRANSLATE_TRAKT_COMMENTS_TO_TURKISH = false
+        const val DEFAULT_LIVE_TV_ENABLED = false
     }
 
     private val translateTraktCommentsToTurkishKey =
         booleanPreferencesKey("translate_trakt_comments_to_turkish")
+
+    private val liveTvEnabledKey =
+        booleanPreferencesKey("live_tv_enabled")
 
     val translateTraktCommentsToTurkish: Flow<Boolean> =
         profileManager.activeProfileId.flatMapLatest { profileId ->
@@ -32,9 +36,22 @@ class ExtraSettingsDataStore @Inject constructor(
             }
         }
 
+    val liveTvEnabled: Flow<Boolean> =
+        profileManager.activeProfileId.flatMapLatest { profileId ->
+            factory.get(profileId, FEATURE).data.map { prefs ->
+                prefs[liveTvEnabledKey] ?: DEFAULT_LIVE_TV_ENABLED
+            }
+        }
+
     suspend fun setTranslateTraktCommentsToTurkish(enabled: Boolean) {
         factory.get(profileManager.activeProfileId.value, FEATURE).edit { prefs ->
             prefs[translateTraktCommentsToTurkishKey] = enabled
+        }
+    }
+
+    suspend fun setLiveTvEnabled(enabled: Boolean) {
+        factory.get(profileManager.activeProfileId.value, FEATURE).edit { prefs ->
+            prefs[liveTvEnabledKey] = enabled
         }
     }
 }

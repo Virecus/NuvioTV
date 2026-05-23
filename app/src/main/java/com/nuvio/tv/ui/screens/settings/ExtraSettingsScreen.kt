@@ -51,15 +51,15 @@ fun ExtraSettingsContent(
                     contentPadding = PaddingValues(bottom = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    item(key = "translate_trakt_comments_to_turkish") {
+                    item(key = "live_tv_enabled") {
                         SettingsToggleRow(
-                            title = stringResource(R.string.extra_translate_trakt_comments_title),
-                            subtitle = stringResource(R.string.extra_translate_trakt_comments_subtitle),
-                            checked = uiState.translateTraktCommentsToTurkish,
+                            title = stringResource(R.string.extra_live_tv_enabled_title),
+                            subtitle = stringResource(R.string.extra_live_tv_enabled_subtitle),
+                            checked = uiState.liveTvEnabled,
                             onToggle = {
                                 viewModel.onEvent(
-                                    ExtraSettingsEvent.ToggleTranslateTraktCommentsToTurkish(
-                                        !uiState.translateTraktCommentsToTurkish
+                                    ExtraSettingsEvent.ToggleLiveTvEnabled(
+                                        !uiState.liveTvEnabled
                                     )
                                 )
                             },
@@ -72,6 +72,21 @@ fun ExtraSettingsContent(
                                         Modifier
                                     }
                                 )
+                        )
+                    }
+
+                    item(key = "translate_trakt_comments_to_turkish") {
+                        SettingsToggleRow(
+                            title = stringResource(R.string.extra_translate_trakt_comments_title),
+                            subtitle = stringResource(R.string.extra_translate_trakt_comments_subtitle),
+                            checked = uiState.translateTraktCommentsToTurkish,
+                            onToggle = {
+                                viewModel.onEvent(
+                                    ExtraSettingsEvent.ToggleTranslateTraktCommentsToTurkish(
+                                        !uiState.translateTraktCommentsToTurkish
+                                    )
+                                )
+                            }
                         )
                     }
                 }

@@ -26,6 +26,11 @@ class ExtraSettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(translateTraktCommentsToTurkish = enabled) }
             }
         }
+        viewModelScope.launch {
+            dataStore.liveTvEnabled.collectLatest { enabled ->
+                _uiState.update { it.copy(liveTvEnabled = enabled) }
+            }
+        }
     }
 
     fun onEvent(event: ExtraSettingsEvent) {
@@ -35,14 +40,21 @@ class ExtraSettingsViewModel @Inject constructor(
                     dataStore.setTranslateTraktCommentsToTurkish(event.enabled)
                 }
             }
+            is ExtraSettingsEvent.ToggleLiveTvEnabled -> {
+                viewModelScope.launch {
+                    dataStore.setLiveTvEnabled(event.enabled)
+                }
+            }
         }
     }
 }
 
 data class ExtraSettingsUiState(
-    val translateTraktCommentsToTurkish: Boolean = false
+    val translateTraktCommentsToTurkish: Boolean = false,
+    val liveTvEnabled: Boolean = false
 )
 
 sealed class ExtraSettingsEvent {
     data class ToggleTranslateTraktCommentsToTurkish(val enabled: Boolean) : ExtraSettingsEvent()
+    data class ToggleLiveTvEnabled(val enabled: Boolean) : ExtraSettingsEvent()
 }

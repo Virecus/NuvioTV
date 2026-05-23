@@ -177,6 +177,19 @@ sealed class Screen(val route: String) {
         }
     }
 
+    data object LiveTv : Screen("live_tv")
+
+    data object LiveTvSource : Screen("live_tv_source/{scraperId}/{scraperName}") {
+        private fun encode(value: String) = URLEncoder.encode(value, "UTF-8").replace("+", "%20")
+        fun createRoute(scraperId: String, scraperName: String) =
+            "live_tv_source/${encode(scraperId)}/${encode(scraperName)}"
+    }
+
+    data object LiveTvCategory : Screen("live_tv_category/{scraperId}/{scraperName}/{category}") {
+        private fun encode(value: String) = URLEncoder.encode(value, "UTF-8").replace("+", "%20")
+        fun createRoute(scraperId: String, scraperName: String, category: String) =
+            "live_tv_category/${encode(scraperId)}/${encode(scraperName)}/${encode(category)}"
+    }
     data object ProfileSelection : Screen("profile_selection")
 
     data object CastDetail : Screen("cast_detail/{personId}/{personName}?preferCrew={preferCrew}") {
