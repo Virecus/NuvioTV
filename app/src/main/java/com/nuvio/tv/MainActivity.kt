@@ -123,6 +123,7 @@ import com.nuvio.tv.core.sync.ProfileSyncService
 import com.nuvio.tv.core.sync.StartupSyncService
 import com.nuvio.tv.data.local.AppOnboardingDataStore
 import com.nuvio.tv.data.local.ExperienceModeDataStore
+import com.nuvio.tv.data.local.ExtraSettingsDataStore
 import com.nuvio.tv.data.local.LayoutPreferenceDataStore
 import com.nuvio.tv.data.local.ThemeDataStore
 import com.nuvio.tv.data.remote.supabase.AvatarRepository
@@ -225,6 +226,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var appOnboardingDataStore: AppOnboardingDataStore
+
+    @Inject
+    lateinit var extraSettingsDataStore: ExtraSettingsDataStore
 
     @Inject
     lateinit var avatarRepository: AvatarRepository
@@ -367,6 +371,9 @@ class MainActivity : ComponentActivity() {
             val installedAddons by remember(addonRepository) {
                 addonRepository.getInstalledAddons()
             }.collectAsState(initial = null)
+            val liveTvEnabled by remember(extraSettingsDataStore) {
+                extraSettingsDataStore.liveTvEnabled
+            }.collectAsState(initial = false)
             val discoverLocation = mainUiPrefs.discoverLocation
 
             NuvioTheme(
@@ -508,7 +515,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    val rootRoutes = remember(discoverLocation) {
+                    val rootRoutes = remember(discoverLocation, liveTvEnabled) {
                         buildSet {
                             add(Screen.Home.route)
                             add(Screen.Search.route)
@@ -517,6 +524,9 @@ class MainActivity : ComponentActivity() {
                             add(Screen.AddonManager.route)
                             if (discoverLocation == DiscoverLocation.IN_SIDEBAR) {
                                 add(Screen.Discover.route)
+                            }
+                            if (liveTvEnabled) {
+                                add(Screen.LiveTv.route)
                             }
                         }
                     }
@@ -527,6 +537,7 @@ class MainActivity : ComponentActivity() {
                     val strNavLibrary = stringResource(R.string.nav_library)
                     val strNavAddons = stringResource(R.string.nav_addons)
                     val strNavSettings = stringResource(R.string.nav_settings)
+                    val strNavLiveTv = stringResource(R.string.nav_live_tv)
                     val drawerItems = remember(
                         strNavHome,
                         strNavDiscover,
@@ -534,7 +545,9 @@ class MainActivity : ComponentActivity() {
                         strNavLibrary,
                         strNavAddons,
                         strNavSettings,
-                        discoverLocation
+                        strNavLiveTv,
+                        discoverLocation,
+                        liveTvEnabled
                     ) {
                         buildList {
                             add(
@@ -574,6 +587,15 @@ class MainActivity : ComponentActivity() {
                                     iconRes = R.raw.sidebar_plugin
                                 )
                             )
+                            if (liveTvEnabled) {
+                                add(
+                                    DrawerItem(
+                                        route = Screen.LiveTv.route,
+                                        label = strNavLiveTv,
+                                        iconRes = R.raw.sidebar_livetv
+                                    )
+                                )
+                            }
                             add(
                                 DrawerItem(
                                     route = Screen.Settings.route,

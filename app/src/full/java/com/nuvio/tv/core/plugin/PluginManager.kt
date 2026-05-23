@@ -1107,6 +1107,121 @@ class PluginManager @Inject constructor(
         Log.d(TAG, "Downloaded ${newScrapers.size}/${plugins.size} extensions for repo $repoId")
     }
 
+    // Sabit canlı TV kaynakları — ileride buraya eklenir
+    private data class BuiltInLiveSource(val name: String, val description: String, val repoUrl: String)
+    private val BUILTIN_LIVE_SOURCES = listOf(
+        BuiltInLiveSource(
+            name = "InatBox",
+            description = "Canlı TV kanalları",
+            repoUrl = "https://raw.githubusercontent.com/Kraptor123/cs-kraptor/refs/heads/master/repo.json"
+        ),
+        BuiltInLiveSource(
+            name = "RecTV",
+            description = "RecTV canlı kanalları",
+            repoUrl = "https://raw.githubusercontent.com/Kraptor123/cs-kraptor/refs/heads/master/repo.json"
+        )
+    )
+
+    /**
+     * Sabit canlı TV kaynak listesini döndürür (InatBox, RecTV).
+     * Her kaynak için kayıtlı scraper varsa onu, yoksa ScraperInfo oluşturur
+     * ve ilk kullanımda depoyu/DEX'i indirir.
+     */
+    suspend fun getLiveSources(): List<ScraperInfo> = withContext(Dispatchers.IO) {
+        val allScrapers = dataStore.scrapers.first()
+        BUILTIN_LIVE_SOURCES.map { source ->
+            // Kayıtlı scraper'lar arasında adıyla eşleşeni bul
+            allScrapers.firstOrNull {
+                it.type == RepositoryType.EXTERNAL_DEX &&
+                it.name.equals(source.name, ignoreCase = true)
+            } ?: ScraperInfo(
+                // Henüz indirilmemiş — placeholder, ID olarak adını kullan
+                id = source.name,
+                repositoryId = "",
+                name = source.name,
+                description = source.description,
+                version = "",
+                filename = source.repoUrl,
+                supportedTypes = listOf("live"),
+                enabled = true,
+                manifestEnabled = true,
+                logo = null,
+                contentLanguage = emptyList(),
+                formats = null,
+                type = RepositoryType.EXTERNAL_DEX
+            )
+        }
+    }
+
+    /**
+     * Verilen scraper ID veya adı ile kanalları yükler.
+     * ID kayıtlı DEX scraper'a karşılık geliyorsa doğrudan çalıştırır,
+     * yoksa repodan indirdikten sonra çalıştırır.
+     */
+    suspend fun getLiveChannels(scraperId: String): List<com.nuvio.tv.domain.model.LiveChannel> =
+        withContext(Dispatchers.IO) {
+            val realId = ensureLiveScraperReady(scraperId)
+            if (realId == null) {
+                Log.e(TAG, "getLiveChannels: $scraperId hazırlanamadı")
+                return@withContext emptyList()
+            }
+            externalExtensionRunner.getLiveChannels(realId)
+        }
+
+    suspend fun getLiveChannelStreams(scraperId: String, channelId: String): List<com.nuvio.tv.domain.model.LocalScraperResult> =
+        withContext(Dispatchers.IO) {
+            val realId = ensureLiveScraperReady(scraperId)
+            if (realId == null) {
+                Log.e(TAG, "getLiveChannelStreams: $scraperId hazırlanamadı")
+                return@withContext emptyList()
+            }
+            externalExtensionRunner.getLiveChannelStreams(realId, channelId)
+        }
+
+    /**
+     * Scraper ID'si zaten kayıtlı bir DEX scraper ise doğrudan döndürür.
+     * Değilse sabit kaynak listesinde adıyla eşleşeni arar, repoyu ekler ve DEX'i indirir.
+     */
+    private suspend fun ensureLiveScraperReady(scraperIdOrName: String): String? {
+        val allScrapers = dataStore.scrapers.first().filter { it.type == RepositoryType.EXTERNAL_DEX }
+
+        // Zaten tam ID ile kayıtlıysa doğrudan döndür
+        if (allScrapers.any { it.id == scraperIdOrName }) {
+            Log.d(TAG, "ensureLiveScraperReady: $scraperIdOrName zaten kayıtlı")
+            return scraperIdOrName
+        }
+
+        // Ada göre bul
+        val byName = allScrapers.firstOrNull { it.name.equals(scraperIdOrName, ignoreCase = true) }
+        if (byName != null) {
+            Log.d(TAG, "ensureLiveScraperReady: $scraperIdOrName → ${byName.id}")
+            return byName.id
+        }
+
+        // Sabit kaynak listesinde adıyla eşleşeni bul ve reposunu ekle
+        val builtIn = BUILTIN_LIVE_SOURCES.firstOrNull {
+            it.name.equals(scraperIdOrName, ignoreCase = true)
+        }
+        if (builtIn == null) {
+            Log.e(TAG, "ensureLiveScraperReady: $scraperIdOrName sabit listede yok")
+            return null
+        }
+
+        Log.d(TAG, "ensureLiveScraperReady: $scraperIdOrName kayıtlı değil, ${builtIn.repoUrl} ekleniyor")
+        val result = addRepository(builtIn.repoUrl)
+        if (result.isFailure) {
+            Log.e(TAG, "ensureLiveScraperReady: depo eklenemedi: ${result.exceptionOrNull()?.message}")
+            return null
+        }
+
+        // Depo eklendikten sonra tekrar ada göre ara
+        return dataStore.scrapers.first()
+            .filter { it.type == RepositoryType.EXTERNAL_DEX }
+            .firstOrNull { it.name.equals(scraperIdOrName, ignoreCase = true) }
+            ?.also { Log.d(TAG, "ensureLiveScraperReady: indirme sonrası $scraperIdOrName → ${it.id}") }
+            ?.id
+    }
+
     companion object {
         private const val MAX_PARALLEL_DOWNLOADS = 10
     }

@@ -1,5 +1,6 @@
 package com.nuvio.tv.core.plugin
 
+import com.nuvio.tv.domain.model.LiveChannel
 import com.nuvio.tv.domain.model.LocalScraperResult
 import com.nuvio.tv.domain.model.PluginRepository
 import com.nuvio.tv.domain.model.RemotePluginInfo
@@ -72,4 +73,10 @@ class PluginManager {
 
     suspend fun testScraper(scraperId: String): Result<Pair<List<LocalScraperResult>, TestDiagnostics>> =
         Result.failure(UnsupportedOperationException("Plugins are not available in this build."))
+
+    suspend fun getLiveSources(): List<ScraperInfo> = emptyList()
+
+    suspend fun getLiveChannels(scraperId: String): List<LiveChannel> = emptyList()
+
+    suspend fun getLiveChannelStreams(scraperId: String, channelId: String): List<LocalScraperResult> = emptyList()
 }

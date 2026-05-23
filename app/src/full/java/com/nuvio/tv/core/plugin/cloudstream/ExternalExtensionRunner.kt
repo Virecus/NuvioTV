@@ -2,10 +2,16 @@ package com.nuvio.tv.core.plugin.cloudstream
 
 import android.util.Log
 import com.lagradost.cloudstream3.AnimeLoadResponse
+import com.lagradost.cloudstream3.APIHolder
 import com.lagradost.cloudstream3.Episode
+import com.lagradost.cloudstream3.HomePageList
 import com.lagradost.cloudstream3.LoadResponse
+import com.lagradost.cloudstream3.LiveSearchResponse
 import com.lagradost.cloudstream3.LiveStreamLoadResponse
 import com.lagradost.cloudstream3.MainAPI
+import com.lagradost.cloudstream3.MainPageData
+import com.lagradost.cloudstream3.MainPageRequest
+import com.nuvio.tv.domain.model.LiveChannel
 import com.lagradost.cloudstream3.MovieLoadResponse
 import com.lagradost.cloudstream3.MovieSearchResponse
 import com.lagradost.cloudstream3.TvSeriesSearchResponse
@@ -857,6 +863,98 @@ class ExternalExtensionRunner @Inject constructor(
             }
         }
     }
+
+    /**
+     * Fetches live channels from a plugin that supports TvType.Live.
+     * Returns a list of [LiveChannel] from all available home-page categories.
+     */
+    suspend fun getLiveChannels(scraperId: String): List<LiveChannel> = withContext(Dispatchers.IO) {
+        extensionLoader.ensureExtractorsLoaded(listOf(scraperId))
+        val api = extensionLoader.getApi(scraperId)
+            ?: synchronized(APIHolder.allProviders) {
+                APIHolder.allProviders.firstOrNull { it.name.equals(scraperId, ignoreCase = true) }
+            }
+        if (api == null) {
+            val known = synchronized(APIHolder.allProviders) { APIHolder.allProviders.map { it.name } }
+            Log.e(TAG, "getLiveChannels: no API for $scraperId (allProviders=$known)")
+            return@withContext emptyList()
+        }
+        Log.d(TAG, "getLiveChannels: using API ${api.name}")
+        if (!api.supportedTypes.contains(TvType.Live)) {
+            Log.w(TAG, "getLiveChannels: $scraperId does not declare TvType.Live")
+        }
+        try {
+            val pageDatas: List<MainPageData> = api.mainPage.ifEmpty {
+                listOf(MainPageData("", "", false))
+            }
+            Log.d(TAG, "getLiveChannels: ${pageDatas.size} mainPage categories: ${pageDatas.map { it.name }}")
+            val channels = mutableListOf<LiveChannel>()
+            for (pageData in pageDatas) {
+                val request = MainPageRequest(pageData.name, pageData.data, pageData.horizontalImages)
+                val response = runCatching { api.getMainPage(1, request) }.getOrNull()
+                if (response == null) {
+                    Log.d(TAG, "getLiveChannels: [${pageData.name}] page=1 → null")
+                    continue
+                }
+                val listNames = response.items.map { "${it.name}(${it.list.size})" }
+                Log.d(TAG, "getLiveChannels: [${pageData.name}] page=1 → ${response.items.size} lists: $listNames")
+                for (list in response.items) {
+                    for (item in list.list) {
+                        // Yalnızca TvType.Live veya LiveSearchResponse tipindeki öğeleri al.
+                        // VOD içerikleri (film/dizi) aynı eklentiden gelse de Live değil.
+                        if (item.type == TvType.Live || item is LiveSearchResponse) {
+                            channels += LiveChannel(
+                                id = item.url,
+                                name = item.name,
+                                poster = item.posterUrl,
+                                category = list.name.ifBlank { pageData.name }
+                            )
+                        }
+                    }
+                }
+            }
+            Log.d(TAG, "getLiveChannels: total ${channels.size} channels")
+            channels
+        } catch (e: Exception) {
+            Log.e(TAG, "getLiveChannels $scraperId failed: ${e.message}", e)
+            emptyList<LiveChannel>()
+        }
+    }
+
+    /**
+     * Loads streams for a live channel by calling load() then loadLinks() on the plugin.
+     * [channelId] is the channel's url field returned by [getLiveChannels].
+     */
+    suspend fun getLiveChannelStreams(scraperId: String, channelId: String): List<LocalScraperResult> =
+        withContext(Dispatchers.IO) {
+            extensionLoader.ensureExtractorsLoaded(listOf(scraperId))
+            val api = extensionLoader.getApi(scraperId)
+                ?: synchronized(APIHolder.allProviders) {
+                    APIHolder.allProviders.firstOrNull { it.name.equals(scraperId, ignoreCase = true) }
+                }
+                ?: return@withContext emptyList()
+            try {
+                val loadResponse = runCatching { api.load(channelId) }.getOrNull()
+                    ?: return@withContext emptyList()
+                val data = when (loadResponse) {
+                    is LiveStreamLoadResponse -> loadResponse.dataUrl ?: loadResponse.url
+                    else -> loadResponse.url
+                }
+                val links = mutableListOf<ExtractorLink>()
+                runCatching {
+                    api.loadLinks(
+                        data = data,
+                        isCasting = false,
+                        subtitleCallback = {},
+                        callback = { links.add(it) }
+                    )
+                }
+                links.filterValid().map { it.toLocalScraperResult(api.name) }
+            } catch (e: Exception) {
+                Log.e(TAG, "getLiveChannelStreams $scraperId/$channelId failed: ${e.message}", e)
+                emptyList()
+            }
+        }
 
     private fun ExtractorLink.toLocalScraperResult(providerName: String): LocalScraperResult {
         val qualityStr = Qualities.getStringByInt(quality).ifEmpty { null }

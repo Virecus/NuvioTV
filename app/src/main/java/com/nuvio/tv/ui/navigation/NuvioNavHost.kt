@@ -48,6 +48,9 @@ import com.nuvio.tv.ui.screens.profile.ProfileSelectionMode
 import com.nuvio.tv.ui.screens.profile.ProfileSelectionScreen
 import com.nuvio.tv.ui.screens.tmdb.TmdbEntityBrowseScreen
 import com.nuvio.tv.ui.screens.home.HeroBackdropState
+import com.nuvio.tv.ui.screens.livetv.LiveTvSourceScreen
+import com.nuvio.tv.ui.screens.livetv.LiveTvCategoryScreen
+import com.nuvio.tv.ui.screens.livetv.LiveTvChannelScreen
 
 @Composable
 fun NuvioNavHost(
@@ -1126,6 +1129,72 @@ fun NuvioNavHost(
                     onBackPress = { navController.popBackStack() }
                 )
             }
+        }
+
+        composable(Screen.LiveTv.route) {
+            LiveTvSourceScreen(
+                onSourceSelected = { source ->
+                    navController.navigate(
+                        Screen.LiveTvSource.createRoute(
+                            scraperId = source.id,
+                            scraperName = source.name
+                        )
+                    )
+                }
+            )
+        }
+
+        composable(
+            route = Screen.LiveTvSource.route,
+            arguments = listOf(
+                navArgument("scraperId") { type = NavType.StringType },
+                navArgument("scraperName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val scraperName = backStackEntry.arguments?.getString("scraperName") ?: ""
+            val scraperId = backStackEntry.arguments?.getString("scraperId") ?: ""
+            LiveTvCategoryScreen(
+                scraperName = scraperName,
+                onCategorySelected = { category ->
+                    navController.navigate(
+                        Screen.LiveTvCategory.createRoute(
+                            scraperId = scraperId,
+                            scraperName = scraperName,
+                            category = category
+                        )
+                    )
+                }
+            )
+        }
+
+        composable(
+            route = Screen.LiveTvCategory.route,
+            arguments = listOf(
+                navArgument("scraperId") { type = NavType.StringType },
+                navArgument("scraperName") { type = NavType.StringType },
+                navArgument("category") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val scraperName = backStackEntry.arguments?.getString("scraperName") ?: ""
+            val category = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("category") ?: "", "UTF-8"
+            )
+            LiveTvChannelScreen(
+                scraperName = scraperName,
+                category = category,
+                onPlayChannel = { stream, channel ->
+                    navController.navigate(
+                        Screen.Player.createRoute(
+                            streamUrl = stream.url,
+                            title = channel.name,
+                            streamName = stream.name,
+                            headers = stream.headers,
+                            contentType = "live",
+                            contentName = channel.name
+                        )
+                    )
+                }
+            )
         }
 
         composable(Screen.Account.route) {
