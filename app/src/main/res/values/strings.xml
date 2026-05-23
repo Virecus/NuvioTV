@@ -1833,6 +1833,7 @@
     <string name="nav_settings">Settings</string>
     <string name="nav_live_tv">Canlı TV</string>
     <string name="live_tv_sources_subtitle">Kaynak seçin</string>
+    <string name="live_tv_platforms_title">Platformlar</string>
     <string name="live_tv_sources_loading">Kaynaklar yükleniyor…</string>
     <string name="live_tv_sources_empty">Canlı TV kaynağı bulunamadı.</string>
     <string name="live_tv_loading">Kanallar yükleniyor…</string>
