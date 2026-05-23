@@ -19,7 +19,7 @@ class ExtraSettingsDataStore @Inject constructor(
     companion object {
         private const val FEATURE = "extra_settings"
         const val DEFAULT_TRANSLATE_TRAKT_COMMENTS_TO_TURKISH = false
-        const val DEFAULT_LIVE_TV_ENABLED = false
+        const val DEFAULT_LIVE_TV_ENABLED = true
     }
 
     private val translateTraktCommentsToTurkishKey =

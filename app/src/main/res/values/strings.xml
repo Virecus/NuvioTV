@@ -493,8 +493,8 @@
     <string name="settings_debug_subtitle">Developer tools and feature flags</string>
     <string name="settings_extra">Extra Settings</string>
     <string name="settings_extra_subtitle">Optional behaviors and comment display preferences</string>
-    <string name="extra_translate_trakt_comments_title">Translate Trakt comments to Turkish</string>
-    <string name="extra_translate_trakt_comments_subtitle">When enabled, Trakt movie and series comments are automatically translated to Turkish.</string>
+    <string name="extra_translate_trakt_comments_title">Trakt Yorumlarını Türkçeye Çevir</string>
+    <string name="extra_translate_trakt_comments_subtitle">Etkinleştirildiğinde Trakt film ve dizi yorumları otomatik olarak Türkçeye çevrilir.</string>
     <string name="extra_live_tv_enabled_title">Canlı TV</string>
     <string name="extra_live_tv_enabled_subtitle">Yan menüde Canlı TV bölümünü gösterir. Kanallar InatBox eklentisinden yüklenir.</string>
     <string name="settings_plugins_section_subtitle">Manage repositories, providers, and plugin states</string>
