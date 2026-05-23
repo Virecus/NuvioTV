@@ -1180,6 +1180,18 @@ fun NuvioNavHost(
                             category = category
                         )
                     )
+                },
+                onPlayChannel = { stream, channel ->
+                    navController.navigate(
+                        Screen.Player.createRoute(
+                            streamUrl = stream.url,
+                            title = channel.name,
+                            streamName = stream.name,
+                            headers = stream.headers,
+                            contentType = "live",
+                            contentName = channel.name
+                        )
+                    )
                 }
             )
         }

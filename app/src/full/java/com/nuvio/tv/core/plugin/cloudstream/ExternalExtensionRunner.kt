@@ -900,16 +900,12 @@ class ExternalExtensionRunner @Inject constructor(
                 Log.d(TAG, "getLiveChannels: [${pageData.name}] page=1 → ${response.items.size} lists: $listNames")
                 for (list in response.items) {
                     for (item in list.list) {
-                        // Yalnızca TvType.Live veya LiveSearchResponse tipindeki öğeleri al.
-                        // VOD içerikleri (film/dizi) aynı eklentiden gelse de Live değil.
-                        if (item.type == TvType.Live || item is LiveSearchResponse) {
-                            channels += LiveChannel(
-                                id = item.url,
-                                name = item.name,
-                                poster = item.posterUrl,
-                                category = list.name.ifBlank { pageData.name }
-                            )
-                        }
+                        channels += LiveChannel(
+                            id = item.url,
+                            name = item.name,
+                            poster = item.posterUrl,
+                            category = list.name.ifBlank { pageData.name }
+                        )
                     }
                 }
             }
@@ -938,6 +934,8 @@ class ExternalExtensionRunner @Inject constructor(
                     ?: return@withContext emptyList()
                 val data = when (loadResponse) {
                     is LiveStreamLoadResponse -> loadResponse.dataUrl ?: loadResponse.url
+                    is MovieLoadResponse -> loadResponse.dataUrl
+                    is TvSeriesLoadResponse -> loadResponse.episodes.firstOrNull()?.data ?: loadResponse.url
                     else -> loadResponse.url
                 }
                 val links = mutableListOf<ExtractorLink>()

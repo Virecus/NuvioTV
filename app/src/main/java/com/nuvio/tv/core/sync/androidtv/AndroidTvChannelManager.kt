@@ -19,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private const val TAG = "TvChannelSync"
 
@@ -47,6 +49,11 @@ class AndroidTvChannelManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: TvChannelPreferences,
 ) {
+    // One mutex per channel type prevents concurrent reconcile calls from interleaving
+    // their read-delete-insert sequences and producing duplicate rows.
+    private val channelMutexes = AndroidTvLauncherChannelType.entries
+        .associateWith { Mutex() }
+
     fun isSupported(): Boolean =
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
 
@@ -146,41 +153,43 @@ class AndroidTvChannelManager @Inject constructor(
         items: List<WatchProgress>
     ) = withContext(Dispatchers.IO) {
         if (!isSupported()) return@withContext
-        runCatching {
-            val channelId = ensureChannel(channelType) ?: return@runCatching
-            val existing = queryExistingPrograms(channelId)
-            val desiredKeys = items.map { progressKey(it) }.toSet()
+        channelMutexes.getValue(channelType).withLock {
+            runCatching {
+                val channelId = ensureChannel(channelType) ?: return@runCatching
+                val existing = queryExistingPrograms(channelId)
+                val desiredKeys = items.map { progressKey(it) }.toSet()
 
-            for ((key, rowId) in existing) {
-                if (key !in desiredKeys) {
-                    context.contentResolver.delete(
-                        TvContractCompat.buildPreviewProgramUri(rowId), null, null
-                    )
-                    Log.d(TAG, "Removed program key=$key")
+                for ((key, rowId) in existing) {
+                    if (key !in desiredKeys) {
+                        context.contentResolver.delete(
+                            TvContractCompat.buildPreviewProgramUri(rowId), null, null
+                        )
+                        Log.d(TAG, "Removed program key=$key")
+                    }
                 }
-            }
 
-            items.forEachIndexed { index, progress ->
-                val key = progressKey(progress)
-                val values = buildProgramValues(progress, channelType, channelId, index, key)
-                val existingRow = existing[key]
-                if (existingRow != null) {
-                    // Delete + re-insert instead of UPDATE: launchers (e.g. Projectivy) only
-                    // re-render tiles when a new row ID appears; UPDATE to an existing row is
-                    // typically ignored by the launcher's display cache.
-                    context.contentResolver.delete(
-                        TvContractCompat.buildPreviewProgramUri(existingRow), null, null
+                items.forEachIndexed { index, progress ->
+                    val key = progressKey(progress)
+                    val values = buildProgramValues(progress, channelType, channelId, index, key)
+                    val existingRow = existing[key]
+                    if (existingRow != null) {
+                        // Delete + re-insert instead of UPDATE: launchers (e.g. Projectivy) only
+                        // re-render tiles when a new row ID appears; UPDATE to an existing row is
+                        // typically ignored by the launcher's display cache.
+                        context.contentResolver.delete(
+                            TvContractCompat.buildPreviewProgramUri(existingRow), null, null
+                        )
+                    }
+                    context.contentResolver.insert(
+                        TvContractCompat.PreviewPrograms.CONTENT_URI, values
+                    )
+                    Log.d(
+                        TAG,
+                        "${if (existingRow != null) "Refreshed" else "Inserted"} program key=$key channel=${channelType.providerId}"
                     )
                 }
-                context.contentResolver.insert(
-                    TvContractCompat.PreviewPrograms.CONTENT_URI, values
-                )
-                Log.d(
-                    TAG,
-                    "${if (existingRow != null) "Refreshed" else "Inserted"} program key=$key channel=${channelType.providerId}"
-                )
-            }
-        }.onFailure { Log.w(TAG, "reconcile failed", it) }
+            }.onFailure { Log.w(TAG, "reconcile failed", it) }
+        }
     }
 
     /** Removes all preview programs from our channel (used on sign-out / history clear). */
