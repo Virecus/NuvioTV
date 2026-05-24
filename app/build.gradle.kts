@@ -62,7 +62,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1016
-        versionName = "0.6.20.1-beta"
+        versionName = "0.6.20.2-beta"
 
         buildConfigField("String", "PARENTAL_GUIDE_API_URL", "\"${localProperties.getProperty("PARENTAL_GUIDE_API_URL", "")}\"")
         buildConfigField("String", "INTRODB_API_URL", "\"${localProperties.getProperty("INTRODB_API_URL", "")}\"")
