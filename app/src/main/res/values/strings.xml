@@ -1,10 +1,6 @@
-﻿<resources>
-    <string name="app_name">Royal</string>
+<resources>
+    <string name="app_name">Nuvio</string>
     <string name="tv_channel_continue_watching">Continue Watching</string>
-    <string name="tv_channel_new_releases">Yeni Çıkanlar</string>
-    <string name="tv_channel_upcoming">Yakında</string>
-    <string name="tv_channel_popular_movies">Popüler Filmler</string>
-    <string name="tv_channel_top_rated_movies">En İyiler</string>
     <string name="type_movie">Movie</string>
     <string name="type_movies">Movies</string>
     <string name="type_series">Series</string>
@@ -104,7 +100,7 @@
     <!-- HomeScreen -->
     <string name="home_no_addons">No addons installed. Add one to get started.</string>
     <string name="home_no_catalog_addons">No catalog addons installed. Install a catalog addon to see content.</string>
-    <string name="auth_notice_nuvio_logged_out">You have been signed out of Royal. Please sign in again.</string>
+    <string name="auth_notice_nuvio_logged_out">You have been signed out of Nuvio. Please sign in again.</string>
     <string name="auth_notice_trakt_logged_out">You have been signed out of Trakt. Please reconnect.</string>
     <string name="error_generic">An error occurred</string>
 
@@ -343,7 +339,7 @@
     <!-- AboutScreen -->
     <string name="about_title">About</string>
     <string name="about_subtitle">App information, updates, and legal links</string>
-    <string name="about_made_with_love">Made with ❤️ by Virecus and friends</string>
+    <string name="about_made_with_love">Made with ❤️ by Tapframe and friends</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_check_updates">Check for updates</string>
     <string name="about_check_updates_subtitle">Download latest release</string>
@@ -354,16 +350,16 @@
     <string name="about_licenses_attributions">Licenses &amp; Attribution</string>
     <string name="about_licenses_attributions_subtitle">Data sources, acknowledgements, and Android licenses</string>
     <string name="licenses_attributions_title">Licenses &amp; Attribution</string>
-    <string name="licenses_attributions_subtitle">Data providers, service credits, and Android playback licenses used by Royal TV.</string>
+    <string name="licenses_attributions_subtitle">Data providers, service credits, and Android playback licenses used by Nuvio TV.</string>
     <string name="licenses_attributions_section_app">APP LICENSE</string>
     <string name="licenses_attributions_section_data">DATA &amp; SERVICES</string>
     <string name="licenses_attributions_section_playback">ANDROID PLAYBACK LICENSES</string>
-    <string name="licenses_attributions_nuvio_title">Royal TV</string>
+    <string name="licenses_attributions_nuvio_title">Nuvio TV</string>
     <string name="licenses_attributions_nuvio_body">Source code and license terms are available in the project repository. Licensed under the GNU General Public License v3.0.</string>
     <string name="licenses_attributions_tmdb_title">The Movie Database (TMDB)</string>
-    <string name="licenses_attributions_tmdb_body">Royal uses the TMDB API for movie and TV metadata, artwork, trailers, cast, production details, collections, and recommendations. This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
+    <string name="licenses_attributions_tmdb_body">Nuvio uses the TMDB API for movie and TV metadata, artwork, trailers, cast, production details, collections, and recommendations. This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
     <string name="licenses_attributions_trakt_title">Trakt</string>
-    <string name="licenses_attributions_trakt_body">Royal connects to Trakt for account authentication, watched history, progress sync, library data, ratings, lists, and comments. Royal is not affiliated with or endorsed by Trakt.</string>
+    <string name="licenses_attributions_trakt_body">Nuvio connects to Trakt for account authentication, watched history, progress sync, library data, ratings, lists, and comments. Nuvio is not affiliated with or endorsed by Trakt.</string>
     <string name="licenses_attributions_mdblist_title">MDBList</string>
     <string name="licenses_attributions_mdblist_body">Nuvio uses MDBList for ratings and external score provider data. Nuvio is not affiliated with or endorsed by MDBList.</string>
     <string name="licenses_attributions_introdb_title">IntroDB</string>
@@ -380,7 +376,6 @@
     <string name="settings_experience_subtitle">Essential or Advanced</string>
     <string name="settings_account">Account</string>
     <string name="settings_account_subtitle">Account and sync status</string>
-    <string name="license_status_menu_title">Lisans durumu</string>
     <string name="settings_profiles">Profiles</string>
     <string name="settings_profiles_subtitle">Manage user profiles</string>
     <string name="settings_layout">Layout</string>
@@ -478,8 +473,8 @@
     <string name="advanced_section_cache">Cache</string>
     <string name="advanced_fast_horizontal_navigation">Fast Horizontal Navigation</string>
     <string name="advanced_fast_horizontal_navigation_subtitle">Increase D-pad repeat speed in rows while keeping repeat throttling enabled.</string>
-    <string name="advanced_nuvio_focus_scroll">Royal Focus Scrolling</string>
-    <string name="advanced_nuvio_focus_scroll_subtitle">Use Royal\'s custom global focus scroll animation and positioning.</string>
+    <string name="advanced_nuvio_focus_scroll">Nuvio Focus Scrolling</string>
+    <string name="advanced_nuvio_focus_scroll_subtitle">Use Nuvio\'s custom global focus scroll animation and positioning.</string>
     <string name="advanced_memory_only_vertical_scroll">Memory-only Vertical Scrolling</string>
     <string name="advanced_memory_only_vertical_scroll_subtitle">Skip disk and network image requests while vertically scrolling home rows.</string>
     <string name="advanced_compose_highlighter">Compose Highlighter</string>
@@ -491,12 +486,6 @@
     <string name="advanced_remember_last_profile_subtitle">Remember last selected profile at startup</string>
     <string name="settings_debug">Debug</string>
     <string name="settings_debug_subtitle">Developer tools and feature flags</string>
-    <string name="settings_extra">Extra Settings</string>
-    <string name="settings_extra_subtitle">Optional behaviors and comment display preferences</string>
-    <string name="extra_translate_trakt_comments_title">Trakt Yorumlarını Türkçeye Çevir</string>
-    <string name="extra_translate_trakt_comments_subtitle">Etkinleştirildiğinde Trakt film ve dizi yorumları otomatik olarak Türkçeye çevrilir.</string>
-    <string name="extra_live_tv_enabled_title">Canlı TV</string>
-    <string name="extra_live_tv_enabled_subtitle">Yan menüde Canlı TV bölümünü gösterir. Kanallar InatBox eklentisinden yüklenir.</string>
     <string name="settings_plugins_section_subtitle">Manage repositories, providers, and plugin states</string>
     <string name="settings_account_section_subtitle">Account and sync status</string>
     <string name="account_stat_addons">addons</string>
@@ -986,6 +975,39 @@
     <string name="debrid_stream_codec_h264">H.264 / AVC</string>
     <string name="debrid_stream_codec_hevc">HEVC / H.265</string>
     <string name="debrid_stream_codec_av1">AV1</string>
+
+    <!-- Debrid stream filter dialogs (per-resolution / quality / size / multi-choice pickers) -->
+    <string name="debrid_stream_per_resolution_limit_title">Per resolution limit</string>
+    <string name="debrid_stream_per_resolution_limit_subtitle">Cap repeated 2160p, 1080p, 720p results after sorting.</string>
+    <string name="debrid_stream_per_quality_limit_title">Per quality limit</string>
+    <string name="debrid_stream_per_quality_limit_subtitle">Cap repeated BluRay, WEB-DL, REMUX results after sorting.</string>
+    <string name="debrid_stream_size_range_title">Size range</string>
+    <string name="debrid_stream_size_range_subtitle">Filter streams by file size.</string>
+    <string name="debrid_stream_resolutions_preferred">Preferred resolutions</string>
+    <string name="debrid_stream_resolutions_required">Required resolutions</string>
+    <string name="debrid_stream_resolutions_excluded">Excluded resolutions</string>
+    <string name="debrid_stream_qualities_preferred">Preferred qualities</string>
+    <string name="debrid_stream_qualities_required">Required qualities</string>
+    <string name="debrid_stream_qualities_excluded">Excluded qualities</string>
+    <string name="debrid_stream_visual_tags_preferred">Preferred visual tags</string>
+    <string name="debrid_stream_visual_tags_required">Required visual tags</string>
+    <string name="debrid_stream_visual_tags_excluded">Excluded visual tags</string>
+    <string name="debrid_stream_audio_tags_preferred">Preferred audio tags</string>
+    <string name="debrid_stream_audio_tags_required">Required audio tags</string>
+    <string name="debrid_stream_audio_tags_excluded">Excluded audio tags</string>
+    <string name="debrid_stream_channels_preferred">Preferred channels</string>
+    <string name="debrid_stream_channels_required">Required channels</string>
+    <string name="debrid_stream_channels_excluded">Excluded channels</string>
+    <string name="debrid_stream_encodes_preferred">Preferred encodes</string>
+    <string name="debrid_stream_encodes_required">Required encodes</string>
+    <string name="debrid_stream_encodes_excluded">Excluded encodes</string>
+    <string name="debrid_stream_languages_preferred">Preferred languages</string>
+    <string name="debrid_stream_languages_required">Required languages</string>
+    <string name="debrid_stream_languages_excluded">Excluded languages</string>
+    <string name="debrid_stream_release_groups_required">Required release groups</string>
+    <string name="debrid_stream_release_groups_excluded">Excluded release groups</string>
+    <string name="debrid_stream_release_groups_input_subtitle">Enter one group per line.</string>
+
     <string name="debrid_formatter_title">Web editor</string>
     <string name="debrid_formatter_subtitle">Configure source display, filters, and sorting from another device.</string>
     <string name="debrid_formatter_configure">Open web editor</string>
@@ -1058,34 +1080,6 @@
     <string name="qr_login_signing_in">Signing you in…</string>
     <string name="qr_login_success">Signed in successfully</string>
     <string name="qr_login_exchange_failed">Could not complete QR sign in</string>
-    <string name="license_status_title">Lisans durumu</string>
-    <string name="license_status_subtitle">Lisans kodunuzu görüntüleyin, güncelleyin ve kalan sürenizi kontrol edin.</string>
-    <string name="license_status_gate_subtitle">Uygulamayı kullanmadan önce hesabınıza giriş yapın ve aynı e-posta adresine tanımlı lisans kodunu doğrulayın.</string>
-    <string name="license_status_gate_hint">Hesap girişi ve geçerli lisans olmadan uygulama ana ekranına geçilemez.</string>
-    <string name="license_status_account_title">Hesap girişi</string>
-    <string name="license_status_account_subtitle">Önce lisans sahibine ait e-posta hesabıyla giriş yapın.</string>
-    <string name="license_status_signed_in_as">Giriş yapılan hesap: %1$s</string>
-    <string name="license_status_switch_account">Hesabı değiştir</string>
-    <string name="license_status_code_placeholder">Lisans kodunu girin</string>
-    <string name="license_status_activate">Kodu doğrula</string>
-    <string name="license_status_clear">Kodu temizle</string>
-    <string name="license_status_loading">Lisans kontrol ediliyor</string>
-    <string name="license_status_loading_subtitle">Kayıtlı lisans bilgisi okunuyor.</string>
-    <string name="license_status_missing_title">Lisans kodu gerekli</string>
-    <string name="license_status_missing_subtitle">Henüz bir lisans kodu kaydedilmemiş.</string>
-    <string name="license_status_invalid_title">Lisans kodu geçersiz</string>
-    <string name="license_status_invalid_subtitle">Bu kod kayıtlı lisanslar arasında bulunamadı.</string>
-    <string name="license_status_account_mismatch_title">Lisans hesabıyla eşleşmiyor</string>
-    <string name="license_status_account_required_subtitle">Bu lisans kodu başka bir hesaba tanımlı. Devam etmek için doğru hesapla giriş yapın.</string>
-    <string name="license_status_account_mismatch_subtitle">Bu lisans kodu başka bir hesaba tanımlı.</string>
-    <string name="license_status_network_title">Lisans sunucusuna ulaşılamıyor</string>
-    <string name="license_status_network_subtitle">İnternetinizi kontrol edin. Sorun devam ederse lisans sağlayıcınız ile iletişime geçin.</string>
-    <string name="license_status_not_started_title">Lisans henüz başlamadı</string>
-    <string name="license_status_not_started_subtitle">Bu lisans %1$s tarihinde aktif olacak.</string>
-    <string name="license_status_expired_title">Lisans süresi doldu</string>
-    <string name="license_status_expired_subtitle">Lisans %1$s tarihinde sona erdi.</string>
-    <string name="license_status_valid_title">Lisans aktif</string>
-    <string name="license_status_valid_subtitle">Kalan süre: %1$s gün. Son tarih: %2$s</string>
     <string name="trakt_code_expires">Code expires in %1$s</string>
     <string name="trakt_token_refreshes">Trakt access token refreshes in %1$s</string>
     <string name="trakt_login_instruction">Press Login to start Trakt device authentication. A QR code will appear here.</string>
@@ -1093,21 +1087,21 @@
     <string name="trakt_watch_progress_title">Watch Progress</string>
     <string name="trakt_watch_progress_subtitle">Choose which progress source powers resume and continue watching</string>
     <string name="trakt_watch_progress_dialog_title">Watch Progress</string>
-    <string name="trakt_watch_progress_dialog_subtitle">Choose whether resume and continue watching should use Trakt or Royal Sync while Trakt scrobbling stays active.</string>
+    <string name="trakt_watch_progress_dialog_subtitle">Choose whether resume and continue watching should use Trakt or Nuvio Sync while Trakt scrobbling stays active.</string>
     <string name="trakt_watch_progress_source_trakt">Trakt</string>
-    <string name="trakt_watch_progress_source_nuvio">Royal Sync</string>
+    <string name="trakt_watch_progress_source_nuvio">Nuvio Sync</string>
     <string name="trakt_library_source_title">Library Source</string>
     <string name="trakt_library_source_subtitle">Choose which library to use for saving and viewing your collection</string>
     <string name="trakt_library_source_dialog_title">Library Source</string>
     <string name="trakt_library_source_dialog_subtitle">Choose where to save and manage your library items</string>
     <string name="trakt_library_source_trakt">Trakt</string>
-    <string name="trakt_library_source_nuvio">Royal Library</string>
+    <string name="trakt_library_source_nuvio">Nuvio Library</string>
     <string name="trakt_library_source_trakt_selected">Trakt library selected</string>
-    <string name="trakt_library_source_nuvio_selected">Royal library selected</string>
+    <string name="trakt_library_source_nuvio_selected">Nuvio library selected</string>
     <string name="trakt_setting_on">On</string>
     <string name="trakt_setting_off">Off</string>
     <string name="trakt_watch_progress_trakt_selected">Watch progress source set to Trakt</string>
-    <string name="trakt_watch_progress_nuvio_selected">Watch progress source set to Royal Sync</string>
+    <string name="trakt_watch_progress_nuvio_selected">Watch progress source set to Nuvio Sync</string>
     <string name="trakt_continue_watching_window">Continue Watching Window</string>
     <string name="trakt_continue_watching_subtitle">Trakt history considered for continue watching</string>
     <string name="trakt_unaired_next_up">Unaired Next Up Episodes</string>
@@ -1244,7 +1238,7 @@
     <string name="profile_pin_overlay_set_support">This PIN will be required before opening this profile.</string>
     <string name="profile_pin_overlay_confirm_support">Re-enter the same 4 digits to finish setup.</string>
     <string name="profile_pin_overlay_mismatch">PINs did not match. Enter a new PIN again.</string>
-    <string name="profile_pin_overlay_forgot_hint">Forgot PIN? Reset it from your Royal account on the Royal website.</string>
+    <string name="profile_pin_overlay_forgot_hint">Forgot PIN? Reset it from your Nuvio account on nuvio website.</string>
     <string name="profile_pin_overlay_back_hint">Press back to cancel</string>
 
 
@@ -1598,7 +1592,7 @@
     <string name="library_delete_subtitle">This removes the list and all list items from Trakt.</string>
     <string name="library_delete_confirm">Delete</string>
     <string name="library_source_local">LOCAL</string>
-    <string name="library_source_nuvio">ROYAL</string>
+    <string name="library_source_nuvio">NUVIO</string>
     <string name="library_source_trakt">TRAKT</string>
     <string name="library_source_saved">Saved</string>
     <string name="library_source_cloud">Cloud</string>
@@ -1641,14 +1635,16 @@
     <string name="cloud_library_type_web">Web</string>
     <string name="cloud_library_type_files">Files</string>
 
+    <!-- Cloud library repository errors -->
+    <string name="cloud_library_error_provider_unavailable">Cloud library is not available for %1$s.</string>
+    <string name="cloud_library_error_disabled">Cloud library is disabled.</string>
+
     <!-- AccountSettingsContent -->
     <string name="account_loading">Loading\u2026</string>
     <string name="account_sync_description">Sync your library, watch progress, addons, and plugins across devices.</string>
     <string name="account_sync_restart_note">Sync is not real-time across active devices. Restart this device after signing in or to pick up changes made elsewhere.</string>
     <string name="account_signin_qr_title">Sign In with QR</string>
     <string name="account_signin_qr_subtitle">Scan a QR code and complete email login on your phone</string>
-    <string name="account_signin_normal_title">Sign In with Email</string>
-    <string name="account_signin_normal_subtitle">Use your email and password on TV to sign in to your account.</string>
     <string name="account_signed_in_label">Signed in</string>
     <string name="account_total_label">Total</string>
     <string name="account_loading_sync">Loading sync data\u2026</string>
@@ -1657,12 +1653,6 @@
     <!-- AuthSignInScreen -->
     <string name="auth_signin_title">Sign In</string>
     <string name="auth_signin_tv_disabled">Email/password entry on TV is disabled. Continue with QR sign in.</string>
-    <string name="auth_signin_description">Sign in with your email and password to continue.</string>
-    <string name="auth_signin_email_placeholder">Email address</string>
-    <string name="auth_signin_password_placeholder">Password</string>
-    <string name="auth_signin_submit">Sign In</string>
-    <string name="auth_signin_create_account">Create Account</string>
-    <string name="auth_signin_loading">Signing in\u2026</string>
     <string name="auth_signin_qr_btn">Continue with QR</string>
 
     <!-- AuthQrSignInScreen -->
@@ -1831,15 +1821,6 @@
     <string name="nav_movies">Movies</string>
     <string name="nav_series">Series</string>
     <string name="nav_settings">Settings</string>
-    <string name="nav_live_tv">Canlı TV</string>
-    <string name="live_tv_sources_subtitle">Kaynak seçin</string>
-    <string name="live_tv_platforms_title">Platformlar</string>
-    <string name="live_tv_sources_loading">Kaynaklar yükleniyor…</string>
-    <string name="live_tv_sources_empty">Canlı TV kaynağı bulunamadı.</string>
-    <string name="live_tv_loading">Kanallar yükleniyor…</string>
-    <string name="live_tv_error">Kanallar yüklenemedi.</string>
-    <string name="live_tv_retry">Tekrar Dene</string>
-    <string name="live_tv_empty">Kanal bulunamadı.</string>
     <string name="action_select">Select</string>
     <string name="settings_rounded_ui">Rounded UI</string>
     <string name="cd_expand_sidebar">Expand sidebar</string>
@@ -1851,6 +1832,12 @@
     <string name="update_open_settings">Open Settings</string>
     <string name="update_install">Install</string>
     <string name="update_ignore">Ignore</string>
+
+    <!-- Update flow errors -->
+    <string name="update_error_check_failed">Update check failed</string>
+    <string name="update_error_download_failed">Download failed</string>
+    <string name="update_error_apk_missing">Downloaded file is missing</string>
+
     <string name="watchlist_added">Added to watchlist</string>
     <string name="watchlist_removed">Removed from watchlist</string>
 
@@ -1989,7 +1976,7 @@
     <string name="cd_preview">Preview</string>
     <string name="cd_test">Test</string>
     <string name="cd_unlink">Unlink</string>
-    <string name="cd_nuvio_logo">Royal TV</string>
+    <string name="cd_nuvio_logo">NuvioTV</string>
     <string name="cd_trakt_logo">Trakt Logo</string>
     <string name="cd_trakt_qr">Trakt activation QR</string>
     <string name="cd_imdb">IMDb</string>
@@ -2000,7 +1987,7 @@
     <string name="cd_expand">Expand %1$s</string>
     <string name="cd_collapse">Collapse %1$s</string>
     <string name="cd_qr_login">QR login code</string>
-    <string name="cd_nuvio">Royal</string>
+    <string name="cd_nuvio">Nuvio</string>
 
     <!-- Debug -->
     <string name="debug_signin_success">Signed in successfully</string>
@@ -2499,5 +2486,14 @@
     <string name="trakt_related_error_request_failed">Trakt related request failed</string>
     <string name="trakt_comments_error_request_failed">Trakt comments request failed</string>
     <string name="trakt_library_error_fetch_list_items">Failed to fetch list items</string>
+
+    <!-- Live TV -->
+    <string name="live_tv_platforms_title">Platformlar</string>
+    <string name="live_tv_sources_loading">Kaynaklar yükleniyor…</string>
+    <string name="live_tv_sources_empty">Hiçbir canlı TV kaynağı bulunamadı</string>
+    <string name="live_tv_loading">Kanallar yükleniyor…</string>
+    <string name="live_tv_empty">Bu kategoride kanal bulunamadı</string>
+    <string name="live_tv_error">Kanallar yüklenirken hata oluştu</string>
+    <string name="live_tv_retry">Tekrar Dene</string>
 
 </resources>

@@ -90,7 +90,7 @@ class StreamRepositoryImpl @Inject constructor(
                 // Track number of pending jobs
                 val totalJobs = streamAddons.size +
                     (if (tmdbId != null) 1 else 0)
-                var completedJobs = 0
+                val completedJobs = java.util.concurrent.atomic.AtomicInteger(0)
 
                 // Launch addon jobs
                 streamAddons.forEach { addon ->
@@ -143,8 +143,7 @@ class StreamRepositoryImpl @Inject constructor(
                                 detail = e.message ?: context.getString(com.nuvio.tv.R.string.stream_error_detail_addon_request_failed)
                             )
                         } finally {
-                            completedJobs++
-                            if (completedJobs >= totalJobs) {
+                            if (completedJobs.incrementAndGet() >= totalJobs) {
                                 resultChannel.close()
                             }
                         }
@@ -157,16 +156,14 @@ class StreamRepositoryImpl @Inject constructor(
                         try {
                             // Stream plugins individually
                             streamLocalPlugins(tmdbId, type, season, episode, resultChannel) {
-                                completedJobs++
-                                if (completedJobs >= totalJobs) {
+                                if (completedJobs.incrementAndGet() >= totalJobs) {
                                     resultChannel.close()
                                 }
                             }
                         } catch (e: Exception) {
                             if (e is CancellationException) throw e
                             Log.e(TAG, "Plugin execution failed: ${e.message}")
-                            completedJobs++
-                            if (completedJobs >= totalJobs) {
+                            if (completedJobs.incrementAndGet() >= totalJobs) {
                                 resultChannel.close()
                             }
                         }
@@ -181,16 +178,10 @@ class StreamRepositoryImpl @Inject constructor(
                 // Emit results as they arrive
                 for (result in resultChannel) {
                     val checkingResult = localDebridAvailabilityService.markChecking(listOf(result)).firstOrNull() ?: result
-                    mergePresentedResult(accumulatedResults, checkingResult)
-                    emit(NetworkResult.Success(accumulatedResults.toList()))
-                    Log.d(TAG, "Emitted ${accumulatedResults.size} addon(s), latest: ${checkingResult.addonName} with ${checkingResult.streams.size} streams")
-
                     val checkedResult = localDebridAvailabilityService.annotateCachedAvailability(listOf(checkingResult)).firstOrNull() ?: checkingResult
-                    if (checkedResult != checkingResult) {
-                        mergePresentedResult(accumulatedResults, checkedResult)
-                        emit(NetworkResult.Success(accumulatedResults.toList()))
-                        Log.d(TAG, "Emitted debrid cache status for ${checkedResult.addonName} with ${checkedResult.streams.size} streams")
-                    }
+                    mergePresentedResult(accumulatedResults, checkedResult)
+                    emit(NetworkResult.Success(accumulatedResults.toList()))
+                    Log.d(TAG, "Emitted ${accumulatedResults.size} addon(s), latest: ${checkedResult.addonName} with ${checkedResult.streams.size} streams")
                 }
             }
 
@@ -404,7 +395,7 @@ class StreamRepositoryImpl @Inject constructor(
             else -> null
         }
 
-        return when (val result = safeApiCall { api.getStreams(streamUrl) }) {
+        return when (val result = safeApiCall(context) { api.getStreams(streamUrl) }) {
             is NetworkResult.Success -> {
                 val streams = result.data.streams?.map { 
                     it.toDomain(addonName, addonLogo) 
@@ -474,7 +465,7 @@ class StreamRepositoryImpl @Inject constructor(
         val metaUrl = "$basePath/meta/$encodedType/$encodedMetaId.json$baseQuery"
         Log.d(TAG, "Fetching inline streams via meta type=$type metaId=$metaId videoId=$videoId url=$metaUrl")
         return try {
-            when (val result = safeApiCall { api.getMeta(metaUrl) }) {
+            when (val result = safeApiCall(context) { api.getMeta(metaUrl) }) {
                 is NetworkResult.Success -> {
                     val metaDto = result.data.meta ?: return emptyList()
                     val matchingVideo = metaDto.videos?.firstOrNull { it.id == videoId }
