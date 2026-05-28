@@ -1178,8 +1178,19 @@ class PluginManager @Inject constructor(
             externalExtensionRunner.getLiveChannelStreams(realId, channelId)
         }
 
+    suspend fun getLiveEpisodeStreams(scraperId: String, episodeData: String): List<com.nuvio.tv.domain.model.LocalScraperResult> =
+        withContext(Dispatchers.IO) {
+            val realId = ensureLiveScraperReady(scraperId)
+            if (realId == null) {
+                Log.e(TAG, "getLiveEpisodeStreams: $scraperId hazırlanamadı")
+                return@withContext emptyList()
+            }
+            externalExtensionRunner.getLiveEpisodeStreams(realId, episodeData)
+        }
+
     suspend fun resolveLiveChannel(scraperId: String, channelId: String): com.nuvio.tv.domain.model.LiveChannelResult =
         withContext(Dispatchers.IO) {
+            Log.d(TAG, "resolveLiveChannel called: scraperId=$scraperId channelId=$channelId")
             val realId = ensureLiveScraperReady(scraperId)
             if (realId == null) {
                 Log.e(TAG, "resolveLiveChannel: $scraperId hazırlanamadı")

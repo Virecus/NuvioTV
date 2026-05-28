@@ -32,6 +32,7 @@ import com.nuvio.tv.core.tmdb.TmdbMetadataService
 import com.nuvio.tv.core.tmdb.TmdbService
 import com.nuvio.tv.domain.model.ContentType
 import com.nuvio.tv.domain.model.LiveChannelResult
+import com.nuvio.tv.domain.model.LiveEpisode
 import com.nuvio.tv.domain.model.LocalScraperResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -911,9 +912,38 @@ class ExternalExtensionRunner @Inject constructor(
                 }
             }
             Log.d(TAG, "getLiveChannels: total ${channels.size} channels")
-            channels
+            // Mark series categories as disabled for providers that fail APK signature checks (e.g. RecTV bad_sig).
+            // Films ("filmler") and live ("canlı") categories work fine — only dizi categories are blocked.
+            fun isSeriCategory(cat: String): Boolean {
+                val c = cat.lowercase()
+                return c.contains("dizi") || c == "tv show" || c == "anime"
+            }
+            val seriesCategories = channels.map { it.category }.toSet().filter { isSeriCategory(it) }
+            val disabledCategories: Set<String> = if (seriesCategories.isNotEmpty()) {
+                val firstSeries = channels.firstOrNull { isSeriCategory(it.category) }
+                if (firstSeries != null) {
+                    val probeResult = runCatching {
+                        resolveLiveChannel(scraperId, firstSeries.id)
+                    }.getOrElse { LiveChannelResult.Empty }
+                    val disabled = probeResult is LiveChannelResult.Empty ||
+                        (probeResult is LiveChannelResult.Streams && probeResult.streams.isEmpty())
+                    if (disabled) {
+                        Log.w(TAG, "getLiveChannels: series categories disabled for $scraperId (probe returned empty)")
+                        seriesCategories.toSet()
+                    } else emptySet()
+                } else emptySet()
+            } else emptySet()
+
+            if (disabledCategories.isNotEmpty()) {
+                channels.map { if (it.category in disabledCategories) it.copy(isDisabled = true) else it }
+            } else {
+                channels
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "getLiveChannels $scraperId failed: ${e.message}", e)
+            Log.e(TAG, "getLiveChannels $scraperId failed: ${e.javaClass.simpleName}: ${e.message}", e)
+            emptyList<LiveChannel>()
+        } catch (e: Error) {
+            Log.e(TAG, "getLiveChannels $scraperId ERROR: ${e.javaClass.simpleName}: ${e.message}", e)
             emptyList<LiveChannel>()
         }
     }
@@ -932,10 +962,67 @@ class ExternalExtensionRunner @Inject constructor(
                 }
                 ?: return@withContext LiveChannelResult.Empty
             try {
-                val loadResponse = runCatching { api.load(channelId) }.getOrNull()
+                val loadResponse = runCatching { api.load(channelId) }
+                    .onFailure { Log.e(TAG, "resolveLiveChannel api.load failed: ${it.message}", it) }
+                    .getOrNull()
                     ?: return@withContext LiveChannelResult.Empty
-                if (loadResponse is TvSeriesLoadResponse) {
-                    return@withContext LiveChannelResult.Series(channelId)
+                Log.d(TAG, "resolveLiveChannel: channelId=${channelId.take(80)} responseType=${loadResponse::class.simpleName}")
+                if (loadResponse is TvSeriesLoadResponse || loadResponse is AnimeLoadResponse) {
+                    val episodes = when (loadResponse) {
+                        is TvSeriesLoadResponse -> loadResponse.episodes.mapNotNull { ep ->
+                            val data = ep.data ?: return@mapNotNull null
+                            LiveEpisode(ep.season ?: 1, ep.episode ?: 1, ep.name, data)
+                        }
+                        is AnimeLoadResponse -> {
+                            // InatBox groups all episodes under DubStatus.None but uses offset
+                            // season numbers per language version (e.g. S1-5 = TR, S6-10 = ENG).
+                            // Episode names carry the real season: "S01 - 01.BÖLÜM".
+                            // The data URL suffix reveals the language: _TR, _ENG, _DUB, etc.
+                            // Detect version groups by season reset (s drops back to 1),
+                            // infer label from URL suffix, and keep all versions.
+                            val nameSeasonRegex = Regex("""^[Ss](\d{1,2})\s*[-–]""")
+                            data class RawEp(val realSeason: Int, val epNum: Int, val ep: com.lagradost.cloudstream3.Episode, val data: String)
+                            val rawList = loadResponse.episodes.values.flatten().mapNotNull { ep ->
+                                val data = ep.data ?: return@mapNotNull null
+                                val s = ep.name?.let { nameSeasonRegex.find(it)?.groupValues?.get(1)?.toIntOrNull() } ?: (ep.season ?: 1)
+                                RawEp(s, ep.episode ?: 1, ep, data)
+                            }
+                            // Split into version groups: new group starts when season resets backward.
+                            val versionGroups = mutableListOf<MutableList<RawEp>>(mutableListOf())
+                            var prevS = 0
+                            for (raw in rawList) {
+                                if (raw.realSeason < prevS) versionGroups.add(mutableListOf())
+                                versionGroups.last().add(raw)
+                                prevS = raw.realSeason
+                            }
+                            // Infer label from URL suffix of first episode in each group.
+                            fun inferLabel(group: List<RawEp>): String {
+                                val sampleUrl = group.firstOrNull()?.data?.uppercase() ?: return "Versiyon"
+                                return when {
+                                    "_TR_DUB" in sampleUrl || "_TRDUB" in sampleUrl -> "TR Dublaj"
+                                    "_TR" in sampleUrl -> "TR Dublaj"
+                                    "_ENG" in sampleUrl || "_EN_" in sampleUrl -> "TR Altyazı"
+                                    "_DUB" in sampleUrl -> "TR Dublaj"
+                                    else -> "Versiyon ${versionGroups.indexOf(group) + 1}"
+                                }
+                            }
+                            Log.d(TAG, "resolveLiveChannel AnimeLoadResponse: ${versionGroups.size} version group(s)")
+                            val result = mutableListOf<LiveEpisode>()
+                            versionGroups.forEach { group ->
+                                val label = inferLabel(group)
+                                val seen = mutableSetOf<Pair<Int, Int>>()
+                                group.forEach { raw ->
+                                    if (seen.add(raw.realSeason to raw.epNum)) {
+                                        result.add(LiveEpisode(raw.realSeason, raw.epNum, raw.ep.name, raw.data, label))
+                                    }
+                                }
+                            }
+                            result
+                        }
+                        else -> emptyList()
+                    }
+                    Log.d(TAG, "resolveLiveChannel: → Series (${loadResponse::class.simpleName}) episodes=${episodes.size}")
+                    return@withContext LiveChannelResult.Series(channelId, loadResponse.name, episodes)
                 }
                 val data = when (loadResponse) {
                     is LiveStreamLoadResponse -> loadResponse.dataUrl ?: loadResponse.url
@@ -967,6 +1054,30 @@ class ExternalExtensionRunner @Inject constructor(
         when (val r = resolveLiveChannel(scraperId, channelId)) {
             is LiveChannelResult.Streams -> r.streams
             else -> emptyList()
+        }
+
+    /**
+     * Loads streams for a specific episode data string (from [LiveEpisode.data]).
+     * Calls loadLinks() directly without going through load() again.
+     */
+    suspend fun getLiveEpisodeStreams(scraperId: String, episodeData: String): List<LocalScraperResult> =
+        withContext(Dispatchers.IO) {
+            extensionLoader.ensureExtractorsLoaded(listOf(scraperId))
+            val api = extensionLoader.getApi(scraperId)
+                ?: synchronized(APIHolder.allProviders) {
+                    APIHolder.allProviders.firstOrNull { it.name.equals(scraperId, ignoreCase = true) }
+                }
+                ?: return@withContext emptyList()
+            val links = mutableListOf<ExtractorLink>()
+            runCatching {
+                api.loadLinks(
+                    data = episodeData,
+                    isCasting = false,
+                    subtitleCallback = {},
+                    callback = { links.add(it) }
+                )
+            }.onFailure { Log.e(TAG, "getLiveEpisodeStreams loadLinks failed: ${it.message}", it) }
+            links.filterValid().map { it.toLocalScraperResult(api.name) }
         }
 
     private fun ExtractorLink.toLocalScraperResult(providerName: String): LocalScraperResult {

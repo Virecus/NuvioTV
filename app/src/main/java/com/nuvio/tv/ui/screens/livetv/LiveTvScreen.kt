@@ -24,16 +24,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
+import android.util.Log
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
@@ -53,6 +57,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Border
@@ -67,6 +73,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.LiveChannel
+import com.nuvio.tv.domain.model.LiveEpisode
 import com.nuvio.tv.domain.model.LocalScraperResult
 import com.nuvio.tv.domain.model.ScraperInfo
 import com.nuvio.tv.ui.theme.NuvioColors
@@ -154,7 +161,6 @@ fun LiveTvCategoryScreen(
     scraperName: String,
     onCategorySelected: (String) -> Unit,
     onPlayChannel: (LocalScraperResult, LiveChannel) -> Unit,
-    onOpenSeries: (videoId: String, title: String) -> Unit,
     viewModel: LiveTvChannelViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -184,7 +190,10 @@ fun LiveTvCategoryScreen(
                     LiveCategoryListItem(
                         category = category,
                         count = count,
-                        onClick = { onCategorySelected(category) }
+                        onClick = {
+                            Log.d("LiveTvScreen", "Category clicked: $category")
+                            onCategorySelected(category)
+                        }
                     )
                 }
             }
@@ -251,43 +260,252 @@ fun LiveTvChannelScreen(
     scraperName: String,
     category: String,
     onPlayChannel: (LocalScraperResult, LiveChannel) -> Unit,
-    onOpenSeries: (videoId: String, title: String) -> Unit,
     viewModel: LiveTvChannelViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val channels = remember(uiState.channels, category) { viewModel.channelsForCategory(category) }
 
-    when {
-        uiState.isLoading -> FullScreenLoading(stringResource(R.string.live_tv_loading))
-        channels.isEmpty() && !uiState.isLoading -> FullScreenEmpty(stringResource(R.string.live_tv_empty), null)
-        else -> {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 24.dp, bottom = 32.dp, start = 48.dp, end = 48.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item(key = "header") {
-                    Column(Modifier.padding(bottom = 16.dp)) {
-                        Text(category, style = MaterialTheme.typography.headlineMedium, color = NuvioColors.TextPrimary)
-                        Text("$scraperName · ${channels.size} içerik", style = MaterialTheme.typography.bodyMedium, color = NuvioColors.TextTertiary)
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            uiState.isLoading -> FullScreenLoading(stringResource(R.string.live_tv_loading))
+            channels.isEmpty() && !uiState.isLoading -> FullScreenEmpty(stringResource(R.string.live_tv_empty), null)
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = 24.dp, bottom = 32.dp, start = 48.dp, end = 48.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item(key = "header") {
+                        Column(Modifier.padding(bottom = 16.dp)) {
+                            Text(category, style = MaterialTheme.typography.headlineMedium, color = NuvioColors.TextPrimary)
+                            Text("$scraperName · ${channels.size} içerik", style = MaterialTheme.typography.bodyMedium, color = NuvioColors.TextTertiary)
+                        }
+                    }
+                    itemsIndexed(channels, key = { _, ch -> ch.id }) { _, channel ->
+                        LiveChannelRow(
+                            channel = channel,
+                            isLoading = uiState.loadingChannelId == channel.id,
+                            onClick = {
+                                viewModel.onChannelSelected(
+                                    channel = channel,
+                                    onStreamsReady = { streams ->
+                                        streams.firstOrNull()?.let { onPlayChannel(it, channel) }
+                                    }
+                                )
+                            }
+                        )
                     }
                 }
-                itemsIndexed(channels, key = { _, ch -> ch.id }) { _, channel ->
-                    LiveChannelRow(
-                        channel = channel,
-                        isLoading = uiState.loadingChannelId == channel.id,
-                        onClick = {
-                            viewModel.onChannelSelected(
-                                channel = channel,
-                                onStreamsReady = { streams ->
-                                    streams.firstOrNull()?.let { onPlayChannel(it, channel) }
-                                },
-                                onSeriesReady = { videoId ->
-                                    onOpenSeries(videoId, channel.name)
-                                }
-                            )
+            }
+        }
+
+        uiState.pendingSeries?.let { series ->
+            EpisodePickerDialog(
+                title = series.title,
+                episodes = series.episodes,
+                loadingEpisodeData = uiState.loadingChannelId,
+                onEpisodeSelected = { episode ->
+                    viewModel.onEpisodeSelected(
+                        episode = episode,
+                        scraperId = series.scraperId,
+                        onStreamsReady = { streams ->
+                            streams.firstOrNull()?.let { stream ->
+                                val fakeChannel = LiveChannel(
+                                    id = episode.data,
+                                    name = "${series.title} S${episode.season}E${episode.episode}",
+                                    poster = null,
+                                    category = category
+                                )
+                                onPlayChannel(stream, fakeChannel)
+                            }
                         }
                     )
+                },
+                onDismiss = { viewModel.clearPendingSeries() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun EpisodePickerDialog(
+    title: String,
+    episodes: List<LiveEpisode>,
+    loadingEpisodeData: String?,
+    onEpisodeSelected: (LiveEpisode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val seasons = remember(episodes) { episodes.map { it.season }.distinct().sorted() }
+    val labels = remember(episodes) { episodes.mapNotNull { it.label }.distinct() }
+    var selectedSeason by remember(seasons) { mutableStateOf(seasons.firstOrNull() ?: 1) }
+    var selectedLabel by remember(labels) { mutableStateOf(labels.firstOrNull()) }
+
+    val seasonEpisodes = remember(episodes, selectedSeason, selectedLabel) {
+        episodes
+            .filter { it.season == selectedSeason && (selectedLabel == null || it.label == selectedLabel) }
+            .sortedBy { it.episode }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.85f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.75f)
+                    .fillMaxHeight(0.85f)
+                    .background(NuvioColors.BackgroundCard, RoundedCornerShape(16.dp))
+                    .padding(24.dp)
+            ) {
+                // Başlık + kapat butonu
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = NuvioColors.TextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    var closeFocused by remember { mutableStateOf(false) }
+                    Card(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(36.dp).onFocusChanged { closeFocused = it.hasFocus },
+                        shape = CardDefaults.shape(RoundedCornerShape(8.dp)),
+                        colors = CardDefaults.colors(
+                            containerColor = if (closeFocused) NuvioColors.FocusBackground else Color.Transparent,
+                            focusedContainerColor = NuvioColors.FocusBackground
+                        ),
+                        border = CardDefaults.border(focusedBorder = Border(border = BorderStroke(1.dp, NuvioColors.FocusRing), shape = RoundedCornerShape(8.dp)))
+                    ) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Close, null, tint = NuvioColors.TextSecondary, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                // Dil etiketi sekmeleri (TR Altyazı / TR Dublaj)
+                if (labels.size > 1) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 10.dp)
+                    ) {
+                        items(labels) { label ->
+                            val isSelected = label == selectedLabel
+                            var focused by remember { mutableStateOf(false) }
+                            Card(
+                                onClick = { selectedLabel = label },
+                                modifier = Modifier.onFocusChanged { focused = it.hasFocus },
+                                shape = CardDefaults.shape(RoundedCornerShape(20.dp)),
+                                colors = CardDefaults.colors(
+                                    containerColor = if (isSelected) NuvioColors.Primary else NuvioColors.SurfaceVariant,
+                                    focusedContainerColor = if (isSelected) NuvioColors.Primary else NuvioColors.FocusBackground
+                                ),
+                                border = CardDefaults.border(focusedBorder = Border(border = BorderStroke(1.dp, NuvioColors.FocusRing), shape = RoundedCornerShape(20.dp)))
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isSelected || focused) Color.White else NuvioColors.TextSecondary,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Sezon sekmeleri
+                if (seasons.size > 1) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 10.dp)
+                    ) {
+                        items(seasons) { season ->
+                            val isSelected = season == selectedSeason
+                            var focused by remember { mutableStateOf(false) }
+                            Card(
+                                onClick = { selectedSeason = season },
+                                modifier = Modifier.onFocusChanged { focused = it.hasFocus },
+                                shape = CardDefaults.shape(RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.colors(
+                                    containerColor = if (isSelected) NuvioColors.BackgroundCard else NuvioColors.SurfaceVariant,
+                                    focusedContainerColor = NuvioColors.FocusBackground
+                                ),
+                                border = CardDefaults.border(
+                                    border = if (isSelected) Border(border = BorderStroke(2.dp, NuvioColors.Primary), shape = RoundedCornerShape(8.dp)) else Border.None,
+                                    focusedBorder = Border(border = BorderStroke(1.dp, NuvioColors.FocusRing), shape = RoundedCornerShape(8.dp))
+                                )
+                            ) {
+                                Text(
+                                    text = "S$season",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isSelected) NuvioColors.Primary else if (focused) NuvioColors.TextPrimary else NuvioColors.TextSecondary,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = NuvioColors.SurfaceVariant, modifier = Modifier.padding(bottom = 8.dp))
+
+                // Bölüm listesi
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(seasonEpisodes, key = { it.data }) { episode ->
+                        val isLoading = loadingEpisodeData == episode.data
+                        var focused by remember { mutableStateOf(false) }
+                        Card(
+                            onClick = { if (!isLoading) onEpisodeSelected(episode) },
+                            modifier = Modifier.fillMaxWidth().onFocusChanged { focused = it.hasFocus },
+                            shape = CardDefaults.shape(RoundedCornerShape(8.dp)),
+                            colors = CardDefaults.colors(
+                                containerColor = NuvioColors.SurfaceVariant.copy(alpha = 0.4f),
+                                focusedContainerColor = NuvioColors.FocusBackground
+                            ),
+                            border = CardDefaults.border(focusedBorder = Border(border = BorderStroke(1.dp, NuvioColors.FocusRing), shape = RoundedCornerShape(8.dp)))
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Text(
+                                    text = "${episode.episode}.",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = NuvioColors.TextTertiary,
+                                    modifier = Modifier.width(30.dp),
+                                    textAlign = TextAlign.End
+                                )
+                                Text(
+                                    text = episode.name ?: "Bölüm ${episode.episode}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (focused) NuvioColors.TextPrimary else NuvioColors.TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (isLoading) {
+                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = NuvioColors.Primary, strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Default.PlayArrow, null, tint = NuvioColors.TextTertiary, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -303,11 +521,12 @@ private fun LiveChannelRow(
     var isFocused by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(10.dp)
     Card(
-        onClick = onClick,
+        onClick = { if (!channel.isDisabled) onClick() },
         modifier = Modifier
             .fillMaxWidth()
             .height(88.dp)
-            .onFocusChanged { isFocused = it.isFocused },
+            .onFocusChanged { isFocused = it.isFocused }
+            .alpha(if (channel.isDisabled) 0.5f else 1f),
         shape = CardDefaults.shape(shape = shape),
         colors = CardDefaults.colors(
             containerColor = NuvioColors.BackgroundCard,
@@ -348,14 +567,26 @@ private fun LiveChannelRow(
                 }
             }
             // Sağ: kanal adı
-            Text(
-                text = channel.name,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
-                color = if (isFocused) NuvioColors.TextPrimary else NuvioColors.TextSecondary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f).padding(horizontal = 16.dp)
-            )
+            Column(
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = channel.name,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
+                    color = if (isFocused) NuvioColors.TextPrimary else NuvioColors.TextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (channel.isDisabled) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "Devre Dışı",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFE53935)
+                    )
+                }
+            }
         }
     }
 }

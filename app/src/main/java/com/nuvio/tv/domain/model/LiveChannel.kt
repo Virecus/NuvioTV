@@ -8,5 +8,6 @@ data class LiveChannel(
     val name: String,
     val poster: String?,
     val category: String,
-    val scraperId: String = ""
+    val scraperId: String = "",
+    val isDisabled: Boolean = false
 )
