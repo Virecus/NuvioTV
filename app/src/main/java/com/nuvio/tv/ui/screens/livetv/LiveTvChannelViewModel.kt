@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nuvio.tv.core.plugin.PluginManager
 import com.nuvio.tv.domain.model.LiveChannel
+import com.nuvio.tv.domain.model.LiveChannelResult
 import com.nuvio.tv.domain.model.LocalScraperResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,14 +55,22 @@ class LiveTvChannelViewModel @Inject constructor(
     fun channelsForCategory(category: String): List<LiveChannel> =
         allChannels.filter { it.category == category }
 
-    fun onChannelSelected(channel: LiveChannel, onStreamsReady: (List<LocalScraperResult>) -> Unit) {
+    fun onChannelSelected(
+        channel: LiveChannel,
+        onStreamsReady: (List<LocalScraperResult>) -> Unit,
+        onSeriesReady: (videoId: String) -> Unit
+    ) {
         viewModelScope.launch {
             _uiState.update { it.copy(loadingChannelId = channel.id) }
-            val streams = runCatching {
-                pluginManager.getLiveChannelStreams(scraperId, channel.id)
-            }.getOrElse { emptyList() }
+            val result = runCatching {
+                pluginManager.resolveLiveChannel(scraperId, channel.id)
+            }.getOrElse { LiveChannelResult.Empty }
             _uiState.update { it.copy(loadingChannelId = null) }
-            onStreamsReady(streams)
+            when (result) {
+                is LiveChannelResult.Streams -> onStreamsReady(result.streams)
+                is LiveChannelResult.Series -> onSeriesReady(result.videoId)
+                is LiveChannelResult.Empty -> onStreamsReady(emptyList())
+            }
         }
     }
 }

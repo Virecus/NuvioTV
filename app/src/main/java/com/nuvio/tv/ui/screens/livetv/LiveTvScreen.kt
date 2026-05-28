@@ -154,6 +154,7 @@ fun LiveTvCategoryScreen(
     scraperName: String,
     onCategorySelected: (String) -> Unit,
     onPlayChannel: (LocalScraperResult, LiveChannel) -> Unit,
+    onOpenSeries: (videoId: String, title: String) -> Unit,
     viewModel: LiveTvChannelViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -250,6 +251,7 @@ fun LiveTvChannelScreen(
     scraperName: String,
     category: String,
     onPlayChannel: (LocalScraperResult, LiveChannel) -> Unit,
+    onOpenSeries: (videoId: String, title: String) -> Unit,
     viewModel: LiveTvChannelViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -275,9 +277,15 @@ fun LiveTvChannelScreen(
                         channel = channel,
                         isLoading = uiState.loadingChannelId == channel.id,
                         onClick = {
-                            viewModel.onChannelSelected(channel) { streams ->
-                                streams.firstOrNull()?.let { onPlayChannel(it, channel) }
-                            }
+                            viewModel.onChannelSelected(
+                                channel = channel,
+                                onStreamsReady = { streams ->
+                                    streams.firstOrNull()?.let { onPlayChannel(it, channel) }
+                                },
+                                onSeriesReady = { videoId ->
+                                    onOpenSeries(videoId, channel.name)
+                                }
+                            )
                         }
                     )
                 }

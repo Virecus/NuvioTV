@@ -79,4 +79,7 @@ class PluginManager {
     suspend fun getLiveChannels(scraperId: String): List<LiveChannel> = emptyList()
 
     suspend fun getLiveChannelStreams(scraperId: String, channelId: String): List<LocalScraperResult> = emptyList()
+
+    suspend fun resolveLiveChannel(scraperId: String, channelId: String): com.nuvio.tv.domain.model.LiveChannelResult =
+        com.nuvio.tv.domain.model.LiveChannelResult.Empty
 }

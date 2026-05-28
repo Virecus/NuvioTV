@@ -31,6 +31,7 @@ import com.nuvio.tv.core.plugin.TestDiagnostics
 import com.nuvio.tv.core.tmdb.TmdbMetadataService
 import com.nuvio.tv.core.tmdb.TmdbService
 import com.nuvio.tv.domain.model.ContentType
+import com.nuvio.tv.domain.model.LiveChannelResult
 import com.nuvio.tv.domain.model.LocalScraperResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -918,24 +919,27 @@ class ExternalExtensionRunner @Inject constructor(
     }
 
     /**
-     * Loads streams for a live channel by calling load() then loadLinks() on the plugin.
-     * [channelId] is the channel's url field returned by [getLiveChannels].
+     * Resolves a live channel:
+     * - TvSeriesLoadResponse → LiveChannelResult.Series(videoId) so the caller can open the episode picker
+     * - Otherwise → LiveChannelResult.Streams(list) with the playable links
      */
-    suspend fun getLiveChannelStreams(scraperId: String, channelId: String): List<LocalScraperResult> =
+    suspend fun resolveLiveChannel(scraperId: String, channelId: String): LiveChannelResult =
         withContext(Dispatchers.IO) {
             extensionLoader.ensureExtractorsLoaded(listOf(scraperId))
             val api = extensionLoader.getApi(scraperId)
                 ?: synchronized(APIHolder.allProviders) {
                     APIHolder.allProviders.firstOrNull { it.name.equals(scraperId, ignoreCase = true) }
                 }
-                ?: return@withContext emptyList()
+                ?: return@withContext LiveChannelResult.Empty
             try {
                 val loadResponse = runCatching { api.load(channelId) }.getOrNull()
-                    ?: return@withContext emptyList()
+                    ?: return@withContext LiveChannelResult.Empty
+                if (loadResponse is TvSeriesLoadResponse) {
+                    return@withContext LiveChannelResult.Series(channelId)
+                }
                 val data = when (loadResponse) {
                     is LiveStreamLoadResponse -> loadResponse.dataUrl ?: loadResponse.url
                     is MovieLoadResponse -> loadResponse.dataUrl
-                    is TvSeriesLoadResponse -> loadResponse.episodes.firstOrNull()?.data ?: loadResponse.url
                     else -> loadResponse.url
                 }
                 val links = mutableListOf<ExtractorLink>()
@@ -947,11 +951,22 @@ class ExternalExtensionRunner @Inject constructor(
                         callback = { links.add(it) }
                     )
                 }
-                links.filterValid().map { it.toLocalScraperResult(api.name) }
+                val results = links.filterValid().map { it.toLocalScraperResult(api.name) }
+                if (results.isEmpty()) LiveChannelResult.Empty else LiveChannelResult.Streams(results)
             } catch (e: Exception) {
-                Log.e(TAG, "getLiveChannelStreams $scraperId/$channelId failed: ${e.message}", e)
-                emptyList()
+                Log.e(TAG, "resolveLiveChannel $scraperId/$channelId failed: ${e.message}", e)
+                LiveChannelResult.Empty
             }
+        }
+
+    /**
+     * Loads streams for a live channel by calling load() then loadLinks() on the plugin.
+     * [channelId] is the channel's url field returned by [getLiveChannels].
+     */
+    suspend fun getLiveChannelStreams(scraperId: String, channelId: String): List<LocalScraperResult> =
+        when (val r = resolveLiveChannel(scraperId, channelId)) {
+            is LiveChannelResult.Streams -> r.streams
+            else -> emptyList()
         }
 
     private fun ExtractorLink.toLocalScraperResult(providerName: String): LocalScraperResult {

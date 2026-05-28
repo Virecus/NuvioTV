@@ -1192,6 +1192,15 @@ fun NuvioNavHost(
                             contentName = channel.name
                         )
                     )
+                },
+                onOpenSeries = { videoId, title ->
+                    navController.navigate(
+                        Screen.Detail.createRoute(
+                            itemId = videoId,
+                            itemType = "series",
+                            addonBaseUrl = null
+                        )
+                    )
                 }
             )
         }
@@ -1220,6 +1229,15 @@ fun NuvioNavHost(
                             headers = stream.headers,
                             contentType = "live",
                             contentName = channel.name
+                        )
+                    )
+                },
+                onOpenSeries = { videoId, _ ->
+                    navController.navigate(
+                        Screen.Detail.createRoute(
+                            itemId = videoId,
+                            itemType = "series",
+                            addonBaseUrl = null
                         )
                     )
                 }

@@ -1178,6 +1178,16 @@ class PluginManager @Inject constructor(
             externalExtensionRunner.getLiveChannelStreams(realId, channelId)
         }
 
+    suspend fun resolveLiveChannel(scraperId: String, channelId: String): com.nuvio.tv.domain.model.LiveChannelResult =
+        withContext(Dispatchers.IO) {
+            val realId = ensureLiveScraperReady(scraperId)
+            if (realId == null) {
+                Log.e(TAG, "resolveLiveChannel: $scraperId hazırlanamadı")
+                return@withContext com.nuvio.tv.domain.model.LiveChannelResult.Empty
+            }
+            externalExtensionRunner.resolveLiveChannel(realId, channelId)
+        }
+
     /**
      * Scraper ID'si zaten kayıtlı bir DEX scraper ise doğrudan döndürür.
      * Değilse sabit kaynak listesinde adıyla eşleşeni arar, repoyu ekler ve DEX'i indirir.
