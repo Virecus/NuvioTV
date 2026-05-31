@@ -895,13 +895,17 @@ class ExternalExtensionRunner @Inject constructor(
                 val request = MainPageRequest(pageData.name, pageData.data, pageData.horizontalImages)
                 // Try page=1 first; some providers (e.g. InatBox) return 0 results on page=1
                 // but work correctly on page=0.
-                var response = runCatching { api.getMainPage(1, request) }.getOrNull()
+                var response = runCatching { api.getMainPage(1, request) }
+                    .onFailure { Log.w(TAG, "getLiveChannels: [${pageData.name}] page=1 error: ${it.javaClass.simpleName}: ${it.message}") }
+                    .getOrNull()
                 if (response != null && response.items.all { it.list.isEmpty() }) {
                     Log.d(TAG, "getLiveChannels: [${pageData.name}] page=1 returned empty lists, retrying page=0")
-                    response = runCatching { api.getMainPage(0, request) }.getOrNull() ?: response
+                    response = runCatching { api.getMainPage(0, request) }
+                        .onFailure { Log.w(TAG, "getLiveChannels: [${pageData.name}] page=0 error: ${it.javaClass.simpleName}: ${it.message}") }
+                        .getOrNull() ?: response
                 }
                 if (response == null) {
-                    Log.d(TAG, "getLiveChannels: [${pageData.name}] → null")
+                    Log.d(TAG, "getLiveChannels: [${pageData.name}] → null (both pages failed)")
                     continue
                 }
                 val listNames = response.items.map { "${it.name}(${it.list.size})" }

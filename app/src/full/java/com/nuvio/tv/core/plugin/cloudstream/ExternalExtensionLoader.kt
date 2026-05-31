@@ -168,9 +168,15 @@ private const val MAX_DEX_SIZE = 10 * 1024 * 1024L // 10MB max per .cs3 file
  */
 @Singleton
 class ExternalExtensionLoader @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @ApplicationContext rawContext: Context,
     private val extractorRegistry: ExternalExtractorRegistry
 ) {
+    // Wrap the real context so extensions that check packageName (e.g. InatBox allowedPackages)
+    // see the upstream CloudStream package name instead of ours.
+    private val context: Context = object : android.content.ContextWrapper(rawContext) {
+        override fun getPackageName(): String = "com.lagradost.cloudstream3"
+    }
+
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
@@ -312,9 +318,8 @@ class ExternalExtensionLoader @Inject constructor(
             // primary overload — get their impl invoked. Plugins that only override
             // load(Activity?) or no-arg load() still work: stub's load(Context) casts
             // the arg to Activity? and chains through.
-            val activity = AcraApplication.getActivity()
             try {
-                plugin.load((activity as Context?) ?: context)
+                plugin.load(context)
             } catch (e: Exception) {
                 Log.w(TAG, "plugin.load() threw (partial load, ${plugin.registeredMainAPIs.size} APIs so far): ${e.message}", e)
             } catch (e: Error) {
@@ -481,9 +486,8 @@ class ExternalExtensionLoader @Inject constructor(
             AcraApplication.context = context
             extractorRegistry.installGlobal()
 
-            val activity = AcraApplication.getActivity()
             try {
-                plugin.load((activity as Context?) ?: context)
+                plugin.load(context)
                 diagnostics.addStep("load(Context): OK, ${plugin.registeredMainAPIs.size} APIs")
             } catch (e: Exception) {
                 diagnostics.addStep("load() FAILED: ${e.javaClass.simpleName}: ${e.message?.take(120)}")
