@@ -357,7 +357,7 @@ class ExternalExtensionLoader @Inject constructor(
                                 && MainAPI::class.java.isAssignableFrom(clazz)
                                 && !java.lang.reflect.Modifier.isAbstract(clazz.modifiers)
                                 && !clazz.isInterface) {
-                                val instance = clazz.getDeclaredConstructor().newInstance() as MainAPI
+                                val instance = tryInstantiateMainApi(clazz, classLoader) ?: continue
                                 fallbackApis.add(instance)
                                 Log.d(TAG, "Fallback found MainAPI: ${instance.name} ($className)")
                             } else if (ExtractorApi::class.java.isAssignableFrom(clazz)
@@ -668,6 +668,56 @@ class ExternalExtensionLoader @Inject constructor(
      * Ensure a DEX file is read-only. Required for Android API 28+ which blocks
      * writable DEX file loading.
      */
+    /**
+     * Tries to instantiate a MainAPI subclass normally first, then falls back to
+     * Unsafe.allocateInstance when the constructor fails (e.g. RecTV calls a suspend
+     * function in <init> which throws during plain newInstance()).
+     */
+    private fun tryInstantiateMainApi(clazz: Class<*>, classLoader: ClassLoader): MainAPI? {
+        // Normal path
+        try {
+            return clazz.getDeclaredConstructor().newInstance() as MainAPI
+        } catch (_: Exception) {
+        } catch (_: Error) {
+        }
+
+        // Unsafe path: allocate without calling constructor, then read name/mainUrl via reflection
+        return try {
+            val unsafeClass = Class.forName("sun.misc.Unsafe")
+            val unsafeField = unsafeClass.getDeclaredField("theUnsafe").also { it.isAccessible = true }
+            val unsafe = unsafeField.get(null)
+            val allocate = unsafeClass.getMethod("allocateInstance", Class::class.java)
+            @Suppress("UNCHECKED_CAST")
+            val instance = allocate.invoke(unsafe, clazz) as MainAPI
+
+            // Walk the class hierarchy to find name/mainUrl backing fields
+            fun findField(name: String): java.lang.reflect.Field? {
+                var c: Class<*>? = clazz
+                while (c != null) {
+                    try { return c.getDeclaredField(name).also { it.isAccessible = true } } catch (_: NoSuchFieldException) {}
+                    c = c.superclass
+                }
+                return null
+            }
+
+            // Derive a display name from the class name if the field is blank/null
+            val simpleName = clazz.simpleName.removeSuffix("API").removeSuffix("Api")
+            findField("name")?.let { f ->
+                val v = f.get(instance) as? String
+                if (v.isNullOrBlank()) f.set(instance, simpleName)
+            }
+
+            Log.d(TAG, "Unsafe-instantiated MainAPI: ${instance.name} (${clazz.name})")
+            instance
+        } catch (e: Exception) {
+            Log.w(TAG, "Unsafe instantiation failed for ${clazz.name}: ${e.message}")
+            null
+        } catch (e: Error) {
+            Log.w(TAG, "Unsafe instantiation error for ${clazz.name}: ${e.message}")
+            null
+        }
+    }
+
     private fun ensureDexReadOnly(dexFile: File) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && dexFile.canWrite()) {
             dexFile.setReadOnly()

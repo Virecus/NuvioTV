@@ -893,13 +893,19 @@ class ExternalExtensionRunner @Inject constructor(
             val channels = mutableListOf<LiveChannel>()
             for (pageData in pageDatas) {
                 val request = MainPageRequest(pageData.name, pageData.data, pageData.horizontalImages)
-                val response = runCatching { api.getMainPage(1, request) }.getOrNull()
+                // Try page=1 first; some providers (e.g. InatBox) return 0 results on page=1
+                // but work correctly on page=0.
+                var response = runCatching { api.getMainPage(1, request) }.getOrNull()
+                if (response != null && response.items.all { it.list.isEmpty() }) {
+                    Log.d(TAG, "getLiveChannels: [${pageData.name}] page=1 returned empty lists, retrying page=0")
+                    response = runCatching { api.getMainPage(0, request) }.getOrNull() ?: response
+                }
                 if (response == null) {
-                    Log.d(TAG, "getLiveChannels: [${pageData.name}] page=1 → null")
+                    Log.d(TAG, "getLiveChannels: [${pageData.name}] → null")
                     continue
                 }
                 val listNames = response.items.map { "${it.name}(${it.list.size})" }
-                Log.d(TAG, "getLiveChannels: [${pageData.name}] page=1 → ${response.items.size} lists: $listNames")
+                Log.d(TAG, "getLiveChannels: [${pageData.name}] → ${response.items.size} lists: $listNames")
                 for (list in response.items) {
                     for (item in list.list) {
                         channels += LiveChannel(
