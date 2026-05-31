@@ -295,6 +295,7 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
             )
         }.debounce(CW_PROGRESS_DEBOUNCE_MS).collectLatest { snapshot ->
             val debug = CwDebugSession()
+            val pipelineProfileId = profileManager.activeProfileId.value
             try {
                 debug.markPhase("filter-snapshot")
                 val cycleStartMs = SystemClock.elapsedRealtime()
@@ -563,7 +564,11 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
                                     contentLanguage = item.contentLanguage
                                 )
                             }
-                            runCatching { cwEnrichmentCache.saveInProgressSnapshot(ipSnap) }
+                            runCatching {
+                                if (profileManager.activeProfileId.value == pipelineProfileId) {
+                                    cwEnrichmentCache.saveInProgressSnapshot(ipSnap)
+                                }
+                            }
                         }
                     }
                 }
@@ -921,7 +926,11 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
                                                 seedEpisode = info.seedEpisode, contentLanguage = info.contentLanguage
                                             )
                                         }
-                                        runCatching { cwEnrichmentCache.saveNextUpSnapshot(nextUpSnap) }
+                                        runCatching {
+                                            if (profileManager.activeProfileId.value == pipelineProfileId) {
+                                                cwEnrichmentCache.saveNextUpSnapshot(nextUpSnap)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1086,8 +1095,10 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
                             contentLanguage = ip.contentLanguage
                         )
                     }
-                    runCatching { cwEnrichmentCache.saveNextUpSnapshot(nextUpSnap, force = true) }
-                    runCatching { cwEnrichmentCache.saveInProgressSnapshot(ipSnap, force = true) }
+                    if (profileManager.activeProfileId.value == pipelineProfileId) {
+                        runCatching { cwEnrichmentCache.saveNextUpSnapshot(nextUpSnap, force = true) }
+                        runCatching { cwEnrichmentCache.saveInProgressSnapshot(ipSnap, force = true) }
+                    }
                 }
 
                 // Rich metadata only runs after the final lightweight CW list is visible.

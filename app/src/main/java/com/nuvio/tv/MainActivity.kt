@@ -210,6 +210,9 @@ class MainActivity : ComponentActivity() {
     lateinit var startupSyncService: StartupSyncService
 
     @Inject
+    lateinit var androidTvChannelSyncService: com.nuvio.tv.core.sync.androidtv.AndroidTvChannelSyncService
+
+    @Inject
     lateinit var profileSettingsSyncService: ProfileSettingsSyncService
 
     @Inject
@@ -236,7 +239,21 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var trailerPlayerPool: com.nuvio.tv.core.player.TrailerPlayerPool
 
+    @Inject
+    lateinit var externalPlaybackTracker: com.nuvio.tv.core.player.ExternalPlaybackTracker
+
     private lateinit var jankStats: JankStats
+
+    /** Activity-level launcher for external video players. Survives all navigation changes. */
+    private val externalPlayerLauncher = registerForActivityResult(
+        com.nuvio.tv.core.player.ExternalPlayerResultContract()
+    ) { result ->
+        Log.d("MainActivity", "External player ActivityResult: $result")
+        externalPlaybackTracker.onActivityResult(result)
+    }
+
+    /** True until the first onResume after onCreate completes. */
+    private var isFirstResumeAfterCreate = false
 
     @OptIn(ExperimentalTvMaterial3Api::class, ExperimentalFoundationApi::class)
     override fun attachBaseContext(newBase: Context) {
@@ -260,7 +277,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        isFirstResumeAfterCreate = true
         window?.setBackgroundDrawable(null)
+
+        // Wire the Activity-level launcher to the tracker
+        externalPlaybackTracker.activityLauncher = externalPlayerLauncher
 
         PluginRuntimeHooks.onActivityCreate(this)
 
@@ -717,7 +738,12 @@ class MainActivity : ComponentActivity() {
         if (::jankStats.isInitialized) jankStats.isTrackingEnabled = true
         startupSyncService.requestSyncNow(includeProfileSettings = false)
         lifecycleScope.launch {
-            traktProgressService.refreshNow()
+            if (isFirstResumeAfterCreate) {
+                isFirstResumeAfterCreate = false
+                traktProgressService.invalidateAndRefresh()
+            } else {
+                traktProgressService.refreshNow()
+            }
         }
     }
 
@@ -729,6 +755,14 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         profileSettingsSyncService.requestForegroundPull()
+        androidTvChannelSyncService.onForegroundChanged(true)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // App going to background (e.g. user returning to the launcher): reconcile the
+        // Continue Watching channel once so Projectivy repaints it with fresh progress.
+        androidTvChannelSyncService.onForegroundChanged(false)
     }
 
     override fun onDestroy() {

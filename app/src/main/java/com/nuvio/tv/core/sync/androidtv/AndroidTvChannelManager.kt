@@ -173,20 +173,15 @@ class AndroidTvChannelManager @Inject constructor(
                     val values = buildProgramValues(progress, channelType, channelId, index, key)
                     val existingRow = existing[key]
                     if (existingRow != null) {
-                        // Delete + re-insert instead of UPDATE: launchers (e.g. Projectivy) only
-                        // re-render tiles when a new row ID appears; UPDATE to an existing row is
-                        // typically ignored by the launcher's display cache.
-                        context.contentResolver.delete(
-                            TvContractCompat.buildPreviewProgramUri(existingRow), null, null
+                        context.contentResolver.update(
+                            TvContractCompat.buildPreviewProgramUri(existingRow), values, null, null
+                        )
+                    } else {
+                        context.contentResolver.insert(
+                            TvContractCompat.PreviewPrograms.CONTENT_URI, values
                         )
                     }
-                    context.contentResolver.insert(
-                        TvContractCompat.PreviewPrograms.CONTENT_URI, values
-                    )
-                    Log.d(
-                        TAG,
-                        "${if (existingRow != null) "Refreshed" else "Inserted"} program key=$key channel=${channelType.providerId}"
-                    )
+                    Log.d(TAG, "${if (existingRow != null) "Updated" else "Inserted"} program key=$key pos=${values.getAsInteger("last_playback_position_millis")} dur=${values.getAsInteger("duration_millis")} pct=${progress.progressPercent}")
                 }
             }.onFailure { Log.w(TAG, "reconcile failed", it) }
         }
