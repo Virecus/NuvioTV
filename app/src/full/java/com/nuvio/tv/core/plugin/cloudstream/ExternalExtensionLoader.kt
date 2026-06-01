@@ -610,9 +610,8 @@ class ExternalExtensionLoader @Inject constructor(
 
                 val plugin = findAndLoadPlugin(classLoader, dexFile)
                 if (plugin != null) {
-                    val activity = AcraApplication.getActivity()
                     try {
-                        plugin.load((activity as Context?) ?: context)
+                        plugin.load(context)
                     } catch (_: Exception) {
                     } catch (_: Error) {
                     }
