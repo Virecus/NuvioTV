@@ -1,10 +1,11 @@
 package com.nuvio.tv.core.plugin
 
 import android.util.Log
+import com.nuvio.tv.core.network.NetworkResult
 import com.nuvio.tv.data.local.AddonPreferences
 import com.nuvio.tv.data.local.CollectionsDataStore
 import com.nuvio.tv.data.local.PluginDataStore
-import com.nuvio.tv.data.repository.AddonRepositoryImpl
+import com.nuvio.tv.domain.repository.AddonRepository
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -34,7 +35,7 @@ data class AppConfig(
 class DefaultRepoBootstrapService @Inject constructor(
     private val pluginManager: PluginManager,
     private val pluginDataStore: PluginDataStore,
-    private val addonRepository: AddonRepositoryImpl,
+    private val addonRepository: AddonRepository,
     private val addonPreferences: AddonPreferences,
     private val collectionsDataStore: CollectionsDataStore
 ) {
@@ -108,8 +109,18 @@ class DefaultRepoBootstrapService @Inject constructor(
         Log.d(TAG, "Addons: ${newUrls.size} yeni addon ekleniyor")
         newUrls.forEach { url ->
             try {
-                addonRepository.addAddon(url)
-                Log.d(TAG, "Addon eklendi: $url")
+                // fetchAddon önce manifest'i cache'e alır, sonra addAddon kaydeder
+                // Bu sayede getInstalledAddons() flow'u hemen gösterir
+                when (val result = addonRepository.fetchAddon(url)) {
+                    is NetworkResult.Success -> {
+                        addonRepository.addAddon(url)
+                        Log.d(TAG, "Addon eklendi: ${result.data.displayName.ifBlank { url }}")
+                    }
+                    is NetworkResult.Error -> {
+                        Log.e(TAG, "Addon manifest alınamadı: $url — ${result.message}")
+                    }
+                    else -> Log.w(TAG, "Addon fetch beklenmedik durum: $url")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Addon eklenemedi: $url — ${e.message}")
             }
