@@ -1,6 +1,7 @@
 package com.nuvio.tv.core.plugin
 
 import android.util.Log
+import com.nuvio.tv.data.local.AddonPreferences
 import com.nuvio.tv.data.local.CollectionsDataStore
 import com.nuvio.tv.data.local.PluginDataStore
 import com.nuvio.tv.data.repository.AddonRepositoryImpl
@@ -34,6 +35,7 @@ class DefaultRepoBootstrapService @Inject constructor(
     private val pluginManager: PluginManager,
     private val pluginDataStore: PluginDataStore,
     private val addonRepository: AddonRepositoryImpl,
+    private val addonPreferences: AddonPreferences,
     private val collectionsDataStore: CollectionsDataStore
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -88,14 +90,14 @@ class DefaultRepoBootstrapService @Inject constructor(
     private suspend fun bootstrapAddons(urls: List<String>) {
         if (urls.isEmpty()) return
 
-        val existingUrls = addonRepository.getInstalledAddons().first()
-            .map { it.baseUrl.trim().trimEnd('/').lowercase() }
-            .toSet()
-
         // AddonRepository strips /manifest.json from the URL when storing — normalize the same way
         fun normalizeAddonUrl(url: String) = url.trim().trimEnd('/')
             .let { if (it.endsWith("/manifest.json", ignoreCase = true)) it.dropLast(14).trimEnd('/') else it }
             .lowercase()
+
+        val existingUrls = addonPreferences.installedAddonUrls.first()
+            .map { normalizeAddonUrl(it) }
+            .toSet()
 
         val newUrls = urls.filter { normalizeAddonUrl(it) !in existingUrls }
         if (newUrls.isEmpty()) {
