@@ -92,7 +92,12 @@ class DefaultRepoBootstrapService @Inject constructor(
             .map { it.baseUrl.trim().trimEnd('/').lowercase() }
             .toSet()
 
-        val newUrls = urls.filter { it.trim().trimEnd('/').lowercase() !in existingUrls }
+        // AddonRepository strips /manifest.json from the URL when storing — normalize the same way
+        fun normalizeAddonUrl(url: String) = url.trim().trimEnd('/')
+            .let { if (it.endsWith("/manifest.json", ignoreCase = true)) it.dropLast(14).trimEnd('/') else it }
+            .lowercase()
+
+        val newUrls = urls.filter { normalizeAddonUrl(it) !in existingUrls }
         if (newUrls.isEmpty()) {
             Log.d(TAG, "Addons: tüm addonlar zaten ekli")
             return
