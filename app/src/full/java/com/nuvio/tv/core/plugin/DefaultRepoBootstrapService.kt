@@ -1,10 +1,16 @@
 package com.nuvio.tv.core.plugin
 
 import android.util.Log
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.nuvio.tv.core.network.NetworkResult
 import com.nuvio.tv.data.local.AddonPreferences
 import com.nuvio.tv.data.local.CollectionsDataStore
+import com.nuvio.tv.data.local.ExtraSettingsDataStore
+import com.nuvio.tv.data.local.MDBListSettingsDataStore
 import com.nuvio.tv.data.local.PluginDataStore
+import com.nuvio.tv.data.local.ProfileDataStoreFactory
+import com.nuvio.tv.data.local.TmdbSettingsDataStore
 import com.nuvio.tv.domain.repository.AddonRepository
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -37,7 +43,11 @@ class DefaultRepoBootstrapService @Inject constructor(
     private val pluginDataStore: PluginDataStore,
     private val addonRepository: AddonRepository,
     private val addonPreferences: AddonPreferences,
-    private val collectionsDataStore: CollectionsDataStore
+    private val collectionsDataStore: CollectionsDataStore,
+    private val tmdbSettingsDataStore: TmdbSettingsDataStore,
+    private val mdbListSettingsDataStore: MDBListSettingsDataStore,
+    private val extraSettingsDataStore: ExtraSettingsDataStore,
+    private val profileDataStoreFactory: ProfileDataStoreFactory
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -53,14 +63,54 @@ class DefaultRepoBootstrapService @Inject constructor(
     fun bootstrap() {
         scope.launch {
             try {
-                val config = fetchConfig() ?: return@launch
+                bootstrapSettings()
 
+                val config = fetchConfig() ?: return@launch
                 bootstrapPlugins(config.plugins)
                 bootstrapAddons(config.addons)
                 bootstrapCollections(config.collections)
             } catch (e: Exception) {
                 Log.e(TAG, "Bootstrap hatası", e)
             }
+        }
+    }
+
+    private suspend fun bootstrapSettings() {
+        // Her ayarı sadece daha önce hiç set edilmemişse yaz (mevcut kullanıcılar etkilenmez)
+        val tmdbStore = profileDataStoreFactory.get(1, "tmdb_settings")
+        val tmdbPrefs = tmdbStore.data.first()
+
+        if (!tmdbPrefs.contains(booleanPreferencesKey("tmdb_enabled"))) {
+            tmdbSettingsDataStore.setEnabled(true)
+            Log.d(TAG, "Settings: TMDB zenginleştirme etkinleştirildi")
+        }
+        if (!tmdbPrefs.contains(booleanPreferencesKey("tmdb_modern_home_enabled"))) {
+            tmdbSettingsDataStore.setModernHomeEnabled(true)
+            Log.d(TAG, "Settings: Modern ana sayfa etkinleştirildi")
+        }
+        if (!tmdbPrefs.contains(stringPreferencesKey("tmdb_language"))) {
+            tmdbSettingsDataStore.setLanguage("tr")
+            Log.d(TAG, "Settings: TMDB dili Türkçe ayarlandı")
+        }
+
+        val mdbStore = profileDataStoreFactory.get(1, "mdblist_settings")
+        val mdbPrefs = mdbStore.data.first()
+
+        if (!mdbPrefs.contains(booleanPreferencesKey("mdblist_enabled"))) {
+            mdbListSettingsDataStore.setEnabled(true)
+            Log.d(TAG, "Settings: MDBList değerlendirmeleri etkinleştirildi")
+        }
+        if (!mdbPrefs.contains(stringPreferencesKey("mdblist_api_key"))) {
+            mdbListSettingsDataStore.setApiKey("1q78puqctbsc3g5qumgxzmd6a")
+            Log.d(TAG, "Settings: MDBList API key ayarlandı")
+        }
+
+        val extraStore = profileDataStoreFactory.get(1, "extra_settings")
+        val extraPrefs = extraStore.data.first()
+
+        if (!extraPrefs.contains(booleanPreferencesKey("translate_trakt_comments_to_turkish"))) {
+            extraSettingsDataStore.setTranslateTraktCommentsToTurkish(true)
+            Log.d(TAG, "Settings: Trakt yorumları Türkçe etkinleştirildi")
         }
     }
 
@@ -91,7 +141,6 @@ class DefaultRepoBootstrapService @Inject constructor(
     private suspend fun bootstrapAddons(urls: List<String>) {
         if (urls.isEmpty()) return
 
-        // AddonRepository strips /manifest.json from the URL when storing — normalize the same way
         fun normalizeAddonUrl(url: String) = url.trim().trimEnd('/')
             .let { if (it.endsWith("/manifest.json", ignoreCase = true)) it.dropLast(14).trimEnd('/') else it }
             .lowercase()
@@ -109,8 +158,6 @@ class DefaultRepoBootstrapService @Inject constructor(
         Log.d(TAG, "Addons: ${newUrls.size} yeni addon ekleniyor")
         newUrls.forEach { url ->
             try {
-                // fetchAddon önce manifest'i cache'e alır, sonra addAddon kaydeder
-                // Bu sayede getInstalledAddons() flow'u hemen gösterir
                 when (val result = addonRepository.fetchAddon(url)) {
                     is NetworkResult.Success -> {
                         addonRepository.addAddon(url)
