@@ -2510,10 +2510,10 @@
     <!-- Navigation / Settings extras -->
     <string name="settings_extra">Extras</string>
     <string name="settings_extra_subtitle">Additional features and options</string>
-    <string name="extra_live_tv_enabled_title">Live TV</string>
-    <string name="extra_live_tv_enabled_subtitle">Enable Live TV section in navigation</string>
-    <string name="extra_translate_trakt_comments_title">Translate Trakt Comments</string>
-    <string name="extra_translate_trakt_comments_subtitle">Auto-translate Trakt comments to your language</string>
+    <string name="extra_live_tv_enabled_title">Canlı TV</string>
+    <string name="extra_live_tv_enabled_subtitle">Gezinme çubuğunda Canlı TV bölümünü etkinleştir</string>
+    <string name="extra_translate_trakt_comments_title">Trakt Yorumlarını Çevir</string>
+    <string name="extra_translate_trakt_comments_subtitle">Trakt yorumlarını otomatik olarak Türkçeye çevir</string>
 
     <!-- TV Launcher channels -->
     <string name="tv_channel_new_releases">New Releases</string>
@@ -2532,35 +2532,35 @@
     <string name="auth_signin_create_account">Create Account</string>
 
     <!-- License status -->
-    <string name="license_status_menu_title">License</string>
-    <string name="license_status_title">License Status</string>
-    <string name="license_status_subtitle">Manage your Nuvio license</string>
-    <string name="license_status_gate_subtitle">A valid license is required to continue</string>
-    <string name="license_status_gate_hint">Enter your license code below</string>
-    <string name="license_status_loading">Checking license…</string>
-    <string name="license_status_loading_subtitle">Please wait while we verify your license</string>
-    <string name="license_status_missing_title">No License Found</string>
-    <string name="license_status_missing_subtitle">Enter a license code to activate</string>
-    <string name="license_status_invalid_title">Invalid License</string>
-    <string name="license_status_invalid_subtitle">This license code is not valid</string>
-    <string name="license_status_network_title">Network Error</string>
-    <string name="license_status_network_subtitle">Could not verify license. Check your connection.</string>
-    <string name="license_status_expired_title">License Expired</string>
-    <string name="license_status_expired_subtitle">Your license has expired. Please renew.</string>
-    <string name="license_status_not_started_title">License Not Active</string>
-    <string name="license_status_not_started_subtitle">Your license period has not started yet</string>
-    <string name="license_status_valid_title">License Active</string>
-    <string name="license_status_valid_subtitle">Your license is valid and active</string>
-    <string name="license_status_account_title">Account</string>
-    <string name="license_status_account_subtitle">Signed in account information</string>
-    <string name="license_status_account_required_subtitle">Sign in to activate your license</string>
-    <string name="license_status_account_mismatch_title">Account Mismatch</string>
-    <string name="license_status_account_mismatch_subtitle">This license belongs to a different account</string>
-    <string name="license_status_signed_in_as">Signed in as</string>
-    <string name="license_status_switch_account">Switch Account</string>
-    <string name="license_status_code_placeholder">License code</string>
-    <string name="license_status_activate">Activate</string>
-    <string name="license_status_clear">Clear</string>
+    <string name="license_status_menu_title">Lisans</string>
+    <string name="license_status_title">Lisans Durumu</string>
+    <string name="license_status_subtitle">Nuvio lisansınızı yönetin</string>
+    <string name="license_status_gate_subtitle">Devam etmek için geçerli bir lisans gereklidir</string>
+    <string name="license_status_gate_hint">Lisans kodunuzu aşağıya girin</string>
+    <string name="license_status_loading">Lisans kontrol ediliyor…</string>
+    <string name="license_status_loading_subtitle">Lisansınız doğrulanırken lütfen bekleyin</string>
+    <string name="license_status_missing_title">Lisans Bulunamadı</string>
+    <string name="license_status_missing_subtitle">Etkinleştirmek için bir lisans kodu girin</string>
+    <string name="license_status_invalid_title">Geçersiz Lisans</string>
+    <string name="license_status_invalid_subtitle">Bu lisans kodu geçerli değil</string>
+    <string name="license_status_network_title">Ağ Hatası</string>
+    <string name="license_status_network_subtitle">Lisans doğrulanamadı. Bağlantınızı kontrol edin.</string>
+    <string name="license_status_expired_title">Lisans Süresi Doldu</string>
+    <string name="license_status_expired_subtitle">Lisansınızın süresi doldu. Lütfen yenileyin.</string>
+    <string name="license_status_not_started_title">Lisans Henüz Aktif Değil</string>
+    <string name="license_status_not_started_subtitle">Lisans süreniz henüz başlamadı</string>
+    <string name="license_status_valid_title">Lisans Aktif</string>
+    <string name="license_status_valid_subtitle">Lisansınız geçerli ve aktif</string>
+    <string name="license_status_account_title">Hesap</string>
+    <string name="license_status_account_subtitle">Giriş yapılan hesap bilgileri</string>
+    <string name="license_status_account_required_subtitle">Lisansınızı etkinleştirmek için giriş yapın</string>
+    <string name="license_status_account_mismatch_title">Geçersiz Lisans</string>
+    <string name="license_status_account_mismatch_subtitle">Bu lisans kodu geçerli değil</string>
+    <string name="license_status_signed_in_as">Oturum açıldı:</string>
+    <string name="license_status_switch_account">Hesap Değiştir</string>
+    <string name="license_status_code_placeholder">Lisans kodu</string>
+    <string name="license_status_activate">Etkinleştir</string>
+    <string name="license_status_clear">Temizle</string>
 
     <string name="watchlist_removed">Removed from watchlist</string>
     <string name="watchlist_added">Added to watchlist</string>

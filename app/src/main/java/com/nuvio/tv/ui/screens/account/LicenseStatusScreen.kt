@@ -303,14 +303,10 @@ private fun LicenseStatusSummaryCard(status: LicenseStatus) {
 
         is LicenseStatus.AccountMismatch -> LicenseSummaryContent(
             title = stringResource(R.string.license_status_account_mismatch_title),
-            subtitle = if (status.signedInEmail.isNullOrBlank()) {
-                stringResource(R.string.license_status_account_required_subtitle)
-            } else {
-                stringResource(R.string.license_status_account_mismatch_subtitle)
-            },
+            subtitle = stringResource(R.string.license_status_account_mismatch_subtitle),
             icon = Icons.Default.ErrorOutline,
-            accent = Color(0xFFFFB74D),
-            record = status.record
+            accent = Color(0xFFE57373),
+            record = null
         )
 
         LicenseStatus.NetworkError -> LicenseSummaryContent(

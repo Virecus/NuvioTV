@@ -146,11 +146,7 @@ private fun licenseStatusSubtitle(status: LicenseStatus): String {
         LicenseStatus.Missing -> stringResource(R.string.license_status_missing_subtitle)
         LicenseStatus.NetworkError -> stringResource(R.string.license_status_network_subtitle)
         is LicenseStatus.Invalid -> stringResource(R.string.license_status_invalid_subtitle)
-        is LicenseStatus.AccountMismatch -> if (status.signedInEmail.isNullOrBlank()) {
-            stringResource(R.string.license_status_account_required_subtitle)
-        } else {
-            stringResource(R.string.license_status_account_mismatch_subtitle)
-        }
+        is LicenseStatus.AccountMismatch -> stringResource(R.string.license_status_account_mismatch_subtitle)
         is LicenseStatus.NotStarted -> stringResource(R.string.license_status_not_started_subtitle, formatLicenseInstant(status.startsAt))
         is LicenseStatus.Expired -> stringResource(R.string.license_status_expired_subtitle, formatLicenseInstant(status.deadlineAt))
         is LicenseStatus.Valid -> stringResource(
