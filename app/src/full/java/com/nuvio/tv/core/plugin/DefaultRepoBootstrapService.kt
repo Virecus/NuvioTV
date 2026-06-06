@@ -100,9 +100,11 @@ class DefaultRepoBootstrapService @Inject constructor(
             mdbListSettingsDataStore.setEnabled(true)
             Log.d(TAG, "Settings: MDBList değerlendirmeleri etkinleştirildi")
         }
-        if (!mdbPrefs.contains(stringPreferencesKey("mdblist_api_key"))) {
-            mdbListSettingsDataStore.setApiKey("1q78puqctbsc3g5qumgxzmd6a")
-            Log.d(TAG, "Settings: MDBList API key ayarlandı")
+        // API key her zaman güncellenir (key değiştiğinde mevcut kullanıcılar da alır)
+        val currentKey = mdbPrefs[stringPreferencesKey("mdblist_api_key")] ?: ""
+        if (currentKey != "khdg8twcbv46zjecuud29ikel") {
+            mdbListSettingsDataStore.setApiKey("khdg8twcbv46zjecuud29ikel")
+            Log.d(TAG, "Settings: MDBList API key güncellendi")
         }
 
         val extraStore = profileDataStoreFactory.get(1, "extra_settings")
