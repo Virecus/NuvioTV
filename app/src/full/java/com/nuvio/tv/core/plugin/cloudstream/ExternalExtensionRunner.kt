@@ -22,7 +22,7 @@ import com.lagradost.cloudstream3.TvSeriesLoadResponse
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.metaproviders.TmdbLink
 import com.lagradost.cloudstream3.metaproviders.TmdbProvider
-import com.lagradost.cloudstream3.utils.AppUtils.toJson
+import com.google.gson.Gson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.Qualities
@@ -171,7 +171,7 @@ class ExternalExtensionRunner @Inject constructor(
             season = season,
             movieName = movieName
         )
-        val data = tmdbLink.toJson()
+        val data = Gson().toJson(tmdbLink)
         diagnostics.addStep("TmdbLink JSON: ${data.take(120)}")
 
         diagnostics.addStep("Calling loadLinks()...")

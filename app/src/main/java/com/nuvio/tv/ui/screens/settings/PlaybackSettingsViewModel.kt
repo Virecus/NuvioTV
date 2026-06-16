@@ -119,6 +119,10 @@ class PlaybackSettingsViewModel @Inject constructor(
         playerSettingsDataStore.setTunnelingEnabled(enabled)
     }
 
+    suspend fun setForceOpticalPassthrough(enabled: Boolean) {
+        playerSettingsDataStore.setForceOpticalPassthrough(enabled)
+    }
+
     suspend fun setSkipSilence(enabled: Boolean) {
         playerSettingsDataStore.setSkipSilence(enabled)
     }
@@ -187,6 +191,10 @@ class PlaybackSettingsViewModel @Inject constructor(
 
     suspend fun setDv7ToDv81PreserveMappingEnabled(enabled: Boolean) {
         playerSettingsDataStore.setDv7ToDv81PreserveMappingEnabled(enabled)
+    }
+
+    suspend fun setStripDvFromHdr10Files(enabled: Boolean) {
+        playerSettingsDataStore.setStripDvFromHdr10Files(enabled)
     }
 
     suspend fun setDv7HandlingMode(mode: Dv7HandlingMode) {
