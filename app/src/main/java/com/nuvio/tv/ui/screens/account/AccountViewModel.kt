@@ -528,7 +528,9 @@ class AccountViewModel @Inject constructor(
         Log.w(TAG, "Raw error: $compactRaw")
 
         val resId = when {
-            // Network / SSL errors — must come before generic "expired" check
+            // Network / SSL / timeout errors — must come before generic "expired" check
+            message.contains("timeout has expired") || message.contains("socket timeout") ||
+            message.contains("request timeout") || message.contains("timed out") ||
             message.contains("chain validation failed") || message.contains("certificate") ||
             message.contains("ssl") || message.contains("failed to connect") ||
             message.contains("connection refused") || message.contains("unable to resolve host") -> R.string.account_error_generic_retry
