@@ -492,6 +492,21 @@ class MainActivity : ComponentActivity() {
                         return@Surface
                     }
 
+                    if (AppFeaturePolicy.inAppUpdatesEnabled &&
+                        (!BuildConfig.IS_DEBUG_BUILD || BuildConfig.IN_APP_UPDATES_ALLOW_DEBUG)
+                    ) {
+                        val updateViewModel: UpdateViewModel = hiltViewModel(this@MainActivity)
+                        val updateState by updateViewModel.uiState.collectAsState()
+                        UpdatePromptDialog(
+                            state = updateState,
+                            onDismiss = { updateViewModel.dismissDialog() },
+                            onDownload = { updateViewModel.downloadUpdate() },
+                            onInstall = { updateViewModel.installUpdateOrRequestPermission() },
+                            onIgnore = { updateViewModel.ignoreThisVersion() },
+                            onOpenUnknownSources = { updateViewModel.openUnknownSourcesSettings() }
+                        )
+                    }
+
                     val hasValidLicense = licenseStatus is LicenseStatus.Valid
                     val hasFullAccount = authState is AuthState.FullAccount
                     if (!hasFullAccount || !hasValidLicense) {
@@ -775,21 +790,6 @@ class MainActivity : ComponentActivity() {
                                 finishAffinity()
                                 finishAndRemoveTask()
                             }
-                        )
-                    }
-
-                    if (AppFeaturePolicy.inAppUpdatesEnabled &&
-                        (!BuildConfig.IS_DEBUG_BUILD || BuildConfig.IN_APP_UPDATES_ALLOW_DEBUG)
-                    ) {
-                        val updateViewModel: UpdateViewModel = hiltViewModel(this@MainActivity)
-                        val updateState by updateViewModel.uiState.collectAsState()
-                        UpdatePromptDialog(
-                            state = updateState,
-                            onDismiss = { updateViewModel.dismissDialog() },
-                            onDownload = { updateViewModel.downloadUpdate() },
-                            onInstall = { updateViewModel.installUpdateOrRequestPermission() },
-                            onIgnore = { updateViewModel.ignoreThisVersion() },
-                            onOpenUnknownSources = { updateViewModel.openUnknownSourcesSettings() }
                         )
                     }
 
