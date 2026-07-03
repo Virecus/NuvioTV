@@ -528,6 +528,11 @@ class AccountViewModel @Inject constructor(
         Log.w(TAG, "Raw error: $compactRaw")
 
         val resId = when {
+            // Network / SSL errors — must come before generic "expired" check
+            message.contains("chain validation failed") || message.contains("certificate") ||
+            message.contains("ssl") || message.contains("failed to connect") ||
+            message.contains("connection refused") || message.contains("unable to resolve host") -> R.string.account_error_generic_retry
+
             // PIN errors (from PG RAISE EXCEPTION or any wrapper)
             message.contains("incorrect pin") || message.contains("invalid pin") || message.contains("wrong pin") -> R.string.account_error_incorrect_pin
 
