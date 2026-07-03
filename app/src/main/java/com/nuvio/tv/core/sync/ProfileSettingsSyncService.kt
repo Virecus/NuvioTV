@@ -97,6 +97,7 @@ private val localOnlyPlayerProfileSettingsKeys = setOf(
     "frame_rate_matching_mode",
     "resolution_matching_enabled",
     "external_player_forward_subtitles",
+    "external_player_send_skip_segments",
     "vod_cache_enabled",
     "vod_cache_size_mode",
     "vod_cache_size_mb",
@@ -126,7 +127,8 @@ private val localOnlyPlayerProfileSettingsKeys = setOf(
     "migration_target_buffer_size_bumped_done",
     "migration_after_rebuffer_lowered_done",
     "migration_back_buffer_duration_reduced_done",
-    "migration_target_buffer_size_reduced_done"
+    "migration_target_buffer_size_reduced_done",
+    "nuvio_performance_mode_enabled"
 )
 
 internal fun shouldExcludePreferenceFromProfileSettingsSync(feature: String, keyName: String): Boolean {
@@ -144,7 +146,8 @@ class ProfileSettingsSyncService @Inject constructor(
     private val authManager: AuthManager,
     private val postgrest: Postgrest,
     private val profileManager: ProfileManager,
-    private val profileDataStoreFactory: ProfileDataStoreFactory
+    private val profileDataStoreFactory: ProfileDataStoreFactory,
+    private val syncClientIdentity: SyncClientIdentity
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val syncMutex = Mutex()
@@ -195,6 +198,7 @@ class ProfileSettingsSyncService @Inject constructor(
                     put("p_profile_id", profileId)
                     put("p_settings_json", settingsJson)
                     put("p_platform", SETTINGS_SYNC_PLATFORM)
+                    putSyncOriginClientId(syncClientIdentity)
                 }
 
                 withJwtRefreshRetry {

@@ -135,6 +135,7 @@ internal fun PlaybackSettingsSections(
     onSetStreamAutoPlayReuseBingeGroup: (Boolean) -> Unit,
     onSetAutoSwitchInternalPlayerOnError: (Boolean) -> Unit,
     onSetExternalPlayerForwardSubtitles: (Boolean) -> Unit,
+    onSetExternalPlayerSendSkipSegments: (Boolean) -> Unit,
     onSetNextEpisodeThresholdPercent: (Float) -> Unit,
     onSetNextEpisodeThresholdMinutesBeforeEnd: (Float) -> Unit,
     onSetStreamAutoPlayTimeoutSeconds: (Int) -> Unit,
@@ -162,6 +163,7 @@ internal fun PlaybackSettingsSections(
     onShowDv7HandlingModeDialog: () -> Unit,
     onSetDv5ToDv81Enabled: (Boolean) -> Unit,
     onSetDv7ToDv81PreserveMappingEnabled: (Boolean) -> Unit,
+    onSetStripHdr10PlusSei: (Boolean) -> Unit,
     onSetSubtitleSize: (Int) -> Unit,
     onSetSubtitleVerticalOffset: (Int) -> Unit,
     onSetSubtitleBold: (Boolean) -> Unit,
@@ -174,6 +176,7 @@ internal fun PlaybackSettingsSections(
     onSetP2pEnabled: (Boolean) -> Unit = {},
     hideTorrentStats: Boolean = false,
     onSetHideTorrentStats: (Boolean) -> Unit = {},
+    onSetNuvioPerformanceModeEnabled: (Boolean) -> Unit,
     onSetBufferEngineEnabled: (Boolean) -> Unit,
     onSetParallelNetworkEnabled: (Boolean) -> Unit,
     onSetUseParallelConnections: (Boolean) -> Unit,
@@ -191,6 +194,7 @@ internal fun PlaybackSettingsSections(
     onSetVodCacheSizeMode: (VodCacheSizeMode) -> Unit,
     onSetVodCacheSizeMb: (Int) -> Unit,
     onResetBufferSettingsToDefaults: () -> Unit,
+    onSetEnableHttp2: (Boolean) -> Unit,
     onResetNetworkSettingsToDefaults: () -> Unit
 ) {
     var generalExpanded by rememberSaveable { mutableStateOf(false) }
@@ -482,6 +486,17 @@ internal fun PlaybackSettingsSections(
                         onFocused = { focusedSection = PlaybackSection.STREAM_SELECTION }
                     )
                 }
+
+                item(key = "external_player_send_skip_segments") {
+                    ToggleSettingsItem(
+                        icon = Icons.Default.Info,
+                        title = stringResource(R.string.playback_external_send_skip_segments),
+                        subtitle = stringResource(R.string.playback_external_send_skip_segments_sub),
+                        isChecked = playerSettings.externalPlayerSendSkipSegments,
+                        onCheckedChange = onSetExternalPlayerSendSkipSegments,
+                        onFocused = { focusedSection = PlaybackSection.STREAM_SELECTION }
+                    )
+                }
             }
 
             item(key = "stream_internal_player_engine") {
@@ -565,6 +580,7 @@ internal fun PlaybackSettingsSections(
                 onSetForceOpticalPassthrough = onSetForceOpticalPassthrough,
                 onSetDv5ToDv81Enabled = onSetDv5ToDv81Enabled,
                 onSetDv7ToDv81PreserveMappingEnabled = onSetDv7ToDv81PreserveMappingEnabled,
+                onSetStripHdr10PlusSei = onSetStripHdr10PlusSei,
                 onItemFocused = { focusedSection = PlaybackSection.AUDIO_TRAILER },
                 enabled = !generalUi.isExternalPlayer,
                 videoExtraItems = {
@@ -687,6 +703,7 @@ internal fun PlaybackSettingsSections(
             ) {
                 bufferAndNetworkSettingsItems(
                     playerSettings = playerSettings,
+                    onSetNuvioPerformanceModeEnabled = onSetNuvioPerformanceModeEnabled,
                     onSetBufferEngineEnabled = onSetBufferEngineEnabled,
                     onSetParallelNetworkEnabled = onSetParallelNetworkEnabled,
                     onSetBufferMinBufferMs = onSetBufferMinBufferMs,
@@ -704,6 +721,7 @@ internal fun PlaybackSettingsSections(
                     onSetUseParallelConnections = onSetUseParallelConnections,
                     onSetParallelConnectionCount = onSetParallelConnectionCount,
                     onSetParallelChunkSizeMb = onSetParallelChunkSizeMb,
+                    onSetEnableHttp2 = onSetEnableHttp2,
                     onResetNetworkToDefaults = onResetNetworkSettingsToDefaults
                 )
             }

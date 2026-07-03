@@ -280,6 +280,7 @@ fun SettingsScreen(
             SettingsCategory.PLAYBACK to FocusRequester(),
             SettingsCategory.ADVANCED to FocusRequester(),
             SettingsCategory.ABOUT to FocusRequester(),
+            SettingsCategory.ACCOUNT to FocusRequester(),
             SettingsCategory.EXTRA to FocusRequester()
         )
     }
@@ -540,7 +541,13 @@ fun SettingsScreen(
                         )
                         SettingsCategory.ACCOUNT -> AccountSettingsInline(
                             onNavigateToAuthSignIn = onNavigateToAuthSignIn,
-                            onNavigateToLicenseStatus = onNavigateToLicenseStatus
+                            onNavigateToLicenseStatus = onNavigateToLicenseStatus,
+                            onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn,
+                            initialFocusRequester = if (allowDetailAutofocus) {
+                                contentFocusRequesters[SettingsCategory.ACCOUNT]
+                            } else {
+                                null
+                            }
                         )
                         SettingsCategory.DEBUG -> DebugSettingsContent()
                         SettingsCategory.EXTRA -> ExtraSettingsContent(
@@ -639,7 +646,9 @@ private fun EssentialAdvancedSettingsContent(
 @Composable
 private fun AccountSettingsInline(
     onNavigateToAuthSignIn: () -> Unit,
-    onNavigateToLicenseStatus: () -> Unit
+    onNavigateToLicenseStatus: () -> Unit,
+    onNavigateToAuthQrSignIn: () -> Unit,
+    initialFocusRequester: FocusRequester?
 ) {
     val accountViewModel: com.nuvio.tv.ui.screens.account.AccountViewModel = hiltViewModel()
     val accountUiState by accountViewModel.uiState.collectAsStateWithLifecycle()
@@ -652,12 +661,18 @@ private fun AccountSettingsInline(
             title = stringResource(R.string.settings_account),
             subtitle = stringResource(R.string.settings_account_section_subtitle)
         )
-        SettingsGroupCard(modifier = Modifier.fillMaxSize()) {
+        SettingsGroupCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
             com.nuvio.tv.ui.screens.account.AccountSettingsContent(
                 uiState = accountUiState,
                 viewModel = accountViewModel,
                 onNavigateToAuthSignIn = onNavigateToAuthSignIn,
-                onNavigateToLicenseStatus = onNavigateToLicenseStatus
+                onNavigateToLicenseStatus = onNavigateToLicenseStatus,
+                onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn,
+                initialFocusRequester = initialFocusRequester
             )
         }
     }

@@ -4,7 +4,7 @@ cryptoJs = "4.2.0"
 kotlin = "2.3.0"
 coreKtx = "1.15.0"
 appcompat = "1.6.1"
-composeBom = "2026.01.01"
+composeBom = "2026.05.01"
 tvFoundation = "1.0.0-rc01"
 tvMaterial = "1.1.0-rc01"
 tvprovider = "1.0.0"
@@ -124,6 +124,7 @@ markdown-renderer-m3 = { group = "com.mikepenz", name = "multiplatform-markdown-
 supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }
 supabase-auth = { group = "io.github.jan-tennert.supabase", name = "auth-kt" }
 supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt" }
+supabase-realtime = { group = "io.github.jan-tennert.supabase", name = "realtime-kt" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 
 # Kotlinx Serialization
