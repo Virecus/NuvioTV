@@ -514,6 +514,34 @@ class MainActivity : ComponentActivity() {
                             gateMode = true,
                             onBackPress = {}
                         )
+                        if (hasFullAccount && licenseStatus is LicenseStatus.Loading) {
+                            androidx.compose.ui.window.Dialog(onDismissRequest = {}) {
+                                androidx.compose.foundation.layout.Row(
+                                    modifier = androidx.compose.ui.Modifier
+                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+                                        .background(NuvioTheme.colors.BackgroundElevated)
+                                        .border(
+                                            NuvioTheme.spacing.hairline,
+                                            NuvioTheme.colors.Border,
+                                            androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                                        )
+                                        .padding(horizontal = 28.dp, vertical = 20.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    androidx.compose.material3.CircularProgressIndicator(
+                                        modifier = androidx.compose.ui.Modifier.size(24.dp),
+                                        strokeWidth = 2.5.dp,
+                                        color = NuvioTheme.colors.Primary
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.license_status_loading),
+                                        style = androidx.tv.material3.MaterialTheme.typography.bodyMedium,
+                                        color = androidx.tv.material3.MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
                         return@Surface
                     }
 
