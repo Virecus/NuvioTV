@@ -13,6 +13,7 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.HttpHeaders
 import java.security.SecureRandom
@@ -37,6 +38,11 @@ object SupabaseModule {
             supabaseKey = BuildConfig.SUPABASE_ANON_KEY
         ) {
             httpConfig {
+                install(HttpTimeout) {
+                    requestTimeoutMillis = 60_000
+                    connectTimeoutMillis = 30_000
+                    socketTimeoutMillis = 60_000
+                }
                 defaultRequest {
                     headers.append(HttpHeaders.UserAgent, userAgent)
                 }
