@@ -13,15 +13,10 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.HttpHeaders
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import javax.inject.Singleton
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -40,19 +35,8 @@ object SupabaseModule {
                 defaultRequest {
                     headers.append(HttpHeaders.UserAgent, userAgent)
                 }
-                if (BuildConfig.DEBUG) {
-                    val trustAll = object : X509TrustManager {
-                        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = Unit
-                        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) = Unit
-                        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-                    }
-                    val sslContext = SSLContext.getInstance("TLS").apply {
-                        init(null, arrayOf<TrustManager>(trustAll), SecureRandom())
-                    }
-                    HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.socketFactory)
-                    HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> true }
-                }
             }
+            httpEngine = OkHttp.create {}
             install(Auth) {
                 alwaysAutoRefresh = true
                 autoLoadFromStorage = true
