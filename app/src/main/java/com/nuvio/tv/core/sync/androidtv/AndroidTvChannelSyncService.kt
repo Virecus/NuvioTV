@@ -206,6 +206,7 @@ class AndroidTvChannelSyncService @Inject constructor(
         return (inProgressSorted + nextUpSorted)
             .sortedByDescending { it.sortKey }
             .map { it.watchProgress }
+            .distinctBy { it.contentId }
     }
 
     private fun nextUpDismissKey(item: CachedNextUpItem): String {

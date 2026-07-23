@@ -60,31 +60,10 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
 
     // OkHttp client used only by the opt-in parallel-connections path.
     private val playbackHttpClient by lazy {
-        val trustAllManager = object : X509TrustManager {
-            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
-            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
-            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
-        }
-        val sslContext = SSLContext.getInstance("TLS").apply {
-            init(null, arrayOf<TrustManager>(trustAllManager), SecureRandom())
-        }
-        val dispatcher = Dispatcher().apply {
-            maxRequests = 64
-            maxRequestsPerHost = 32
-        }
-        val builder = OkHttpClient.Builder()
+        PlayerPlaybackNetworking.playbackHttpClient.newBuilder()
             .cookieJar(NuvioApplication.extensionCookieJar)
-            .dns(IPv4FirstDns())
-            .dispatcher(dispatcher)
-            .sslSocketFactory(sslContext.socketFactory, trustAllManager)
-            .hostnameVerifier { _, _ -> true }
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
-            .writeTimeout(45, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(true)
-            .followRedirects(true)
-            .followSslRedirects(true)
-        NuvioExoPlayerPerformanceHelper.applyNetworkOptimizations(builder).build()
+            .let { NuvioExoPlayerPerformanceHelper.applyNetworkOptimizations(it) }
+            .build()
     }
 
     fun configureSubtitleParsing(
@@ -375,7 +354,7 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
             val fileName = pathPart.substringAfterLast('/')
             val extension = fileName.substringAfterLast('.', missingDelimiterValue = "")
             return when (extension) {
-                "m3u8" -> MimeTypes.APPLICATION_M3U8
+                "m3u8", "m3u" -> MimeTypes.APPLICATION_M3U8
                 "mpd" -> MimeTypes.APPLICATION_MPD
                 "ism", "isml" -> MimeTypes.APPLICATION_SS
                 else -> null
@@ -495,7 +474,7 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
             val extension = fileName.substringAfterLast('.', missingDelimiterValue = "")
 
             return when {
-                extension == "m3u8" -> MimeTypes.APPLICATION_M3U8
+                extension == "m3u8" || extension == "m3u" -> MimeTypes.APPLICATION_M3U8
                 extension == "mpd" -> MimeTypes.APPLICATION_MPD
                 extension == "ism" || extension == "isml" -> MimeTypes.APPLICATION_SS
                 extension == "mkv" -> MimeTypes.VIDEO_MATROSKA
@@ -528,9 +507,13 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
                     "type",
                     "ext",
                     "extension",
-                    "output" -> {
+                    "output",
+                    "protocol",
+                    "mode",
+                    "stream",
+                    "service" -> {
                         when (value.substringAfterLast('/').substringAfterLast('.')) {
-                            "m3u8" -> return MimeTypes.APPLICATION_M3U8
+                            "m3u8", "m3u" -> return MimeTypes.APPLICATION_M3U8
                             "mpd" -> return MimeTypes.APPLICATION_MPD
                             "ism", "isml" -> return MimeTypes.APPLICATION_SS
                             "mkv" -> return MimeTypes.VIDEO_MATROSKA
@@ -551,6 +534,8 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
                     "audio/mpegurl",
                     "audio/x-mpegurl",
                     "application/m3u8",
+                    "m3u8",
+                    "m3u",
                     "hls" -> return MimeTypes.APPLICATION_M3U8
                     "application/dash+xml",
                     "video/vnd.mpeg.dash.mpd",
@@ -569,6 +554,7 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
 
             return when {
                 DELIMITED_M3U8_PATTERN.containsMatchIn(value) -> MimeTypes.APPLICATION_M3U8
+                PLAYLIST_HLS_PATTERN.containsMatchIn(value) -> MimeTypes.APPLICATION_M3U8
                 DELIMITED_MPD_PATTERN.containsMatchIn(value) -> MimeTypes.APPLICATION_MPD
                 DELIMITED_SS_PATTERN.containsMatchIn(value) -> MimeTypes.APPLICATION_SS
                 else -> null
@@ -590,7 +576,8 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
             }
         }
 
-        private val DELIMITED_M3U8_PATTERN = Regex("(^|[=/_.?&-])m3u8($|[=/_.?&-])")
+        private val DELIMITED_M3U8_PATTERN = Regex("(^|[=/_.?&-])(m3u8|m3u)($|[=/_.?&-])")
+        private val PLAYLIST_HLS_PATTERN = Regex("/(playlist|hls|manifest|master|vs)/(?!stream$|list$|info$|details$)[a-zA-Z0-9_/-]+$")
         private val DELIMITED_MPD_PATTERN = Regex("(^|[=/_.?&-])mpd($|[=/_.?&-])")
         private val DELIMITED_SS_PATTERN = Regex("(^|[=/_.?&-])(ism|isml)($|[=/_.?&-])")
 
@@ -633,8 +620,24 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
     }
 }
 
+private inline fun <reified T : Throwable> Throwable.findCause(): T? {
+    var current: Throwable? = this
+    while (current != null) {
+        if (current is T) return current
+        current = current.cause
+    }
+    return null
+}
+
 private class PlayerLoadErrorHandlingPolicy : DefaultLoadErrorHandlingPolicy(6) {
     override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
+        val httpException = loadErrorInfo.exception.findCause<androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException>()
+        if (httpException != null) {
+            val code = httpException.responseCode
+            if (code == 400 || code == 401 || code == 403 || code == 404 || code == 410) {
+                return androidx.media3.common.C.TIME_UNSET
+            }
+        }
         val timeout = loadErrorInfo.exception.findCause<SocketTimeoutException>() != null
         return if (timeout) {
             when (loadErrorInfo.errorCount) {
@@ -644,13 +647,4 @@ private class PlayerLoadErrorHandlingPolicy : DefaultLoadErrorHandlingPolicy(6) 
             }
         } else super.getRetryDelayMsFor(loadErrorInfo)
     }
-}
-
-private inline fun <reified T : Throwable> Throwable.findCause(): T? {
-    var current: Throwable? = this
-    while (current != null) {
-        if (current is T) return current
-        current = current.cause
-    }
-    return null
 }

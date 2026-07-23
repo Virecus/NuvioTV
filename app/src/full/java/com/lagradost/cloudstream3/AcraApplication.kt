@@ -25,6 +25,8 @@ open class AcraApplication {
         var context: Context? = null
             set(value) {
                 field = value
+                // Sync with CloudStreamApp (newer extensions reference it directly)
+                CloudStreamApp.context = value
                 // Also set the library's context so WebViewResolver and other
                 // library components can access it
                 if (value != null) {

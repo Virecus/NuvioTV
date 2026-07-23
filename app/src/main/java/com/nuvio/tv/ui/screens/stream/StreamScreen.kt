@@ -171,14 +171,12 @@ fun StreamScreen(
 
     fun routePlayback(playbackInfo: StreamPlaybackInfo) {
         if (openExternalInBrowser(playbackInfo)) {
-            viewModel.onEvent(StreamScreenEvent.OnAutoPlayConsumed)
             return
         }
         val preference = playerPreference ?: return
         if (playbackInfo.isTorrent && !p2pEnabled) {
             pendingTorrentPlaybackInfo = playbackInfo
             showP2pConsentDialog = true
-            viewModel.onEvent(StreamScreenEvent.OnAutoPlayConsumed)
             return
         }
         when (preference) {
@@ -188,14 +186,11 @@ fun StreamScreen(
             PlayerPreference.EXTERNAL -> {
                 if (playbackInfo.url != null || playbackInfo.isTorrent) {
                     launchExternalPlayer(playbackInfo)
-                } else {
-                    viewModel.onEvent(StreamScreenEvent.OnAutoPlayConsumed)
                 }
             }
             PlayerPreference.ASK_EVERY_TIME -> {
                 pendingPlaybackInfo = playbackInfo
                 showPlayerChoiceDialog = true
-                viewModel.onEvent(StreamScreenEvent.OnAutoPlayConsumed)
             }
         }
     }
@@ -285,7 +280,10 @@ fun StreamScreen(
     // mask this screen (whether it auto-launches a player or shows the manual list).
     LaunchedEffect(uiState.isLoading) {
         if (!uiState.isLoading) {
-            viewModel.dismissExternalAutoNextOverlay()
+            viewModel.dismissExternalAutoNextOverlay(
+                forceRelease = !uiState.isDirectAutoPlayFlow ||
+                    playerPreference != PlayerPreference.EXTERNAL
+            )
         }
     }
 
@@ -340,14 +338,18 @@ fun StreamScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.onEvent(StreamScreenEvent.OnResume)
                 // Always dismiss overlay and stop tracking on resume
                 // covers both ActivityResult path and fire-and-forget path.
                 viewModel.stopExternalPlayerTracking()
+                viewModel.onEvent(StreamScreenEvent.OnResume)
                 if (pendingRestoreOnResume) {
                     restoreFocusedStream = true
                     pendingRestoreOnResume = false
                 }
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                // Backgrounded by the external player: playback behind it is healthy,
+                // so the stuck-loader timeout must not treat it as stuck.
+                viewModel.onHostStopped()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
